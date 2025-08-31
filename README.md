@@ -1,98 +1,133 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 중고거래사이트 백엔드 API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+NestJS 기반 중고거래 플랫폼 백엔드 서비스
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## 📋 프로젝트 개요
 
-## Description
+안전하고 확장 가능한 중고거래 플랫폼을 위한 백엔드 API 서비스입니다.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+**기술 스택**: NestJS + Express, PostgreSQL, MongoDB, Redis, RabbitMQ, Elasticsearch
 
-## Project setup
+## 🚀 빠른 시작
+
+### 개발환경 실행
 
 ```bash
-$ pnpm install
+# 환경변수 설정
+cp .env.example .env.development
+
+# SSL 인증서 생성 (개발용)
+chmod +x scripts/generate-ssl.sh
+./scripts/generate-ssl.sh
+
+# 개발환경 실행
+docker-compose -f docker-compose.dev.yml up -d
+
+# 애플리케이션 로그 확인
+docker-compose -f docker-compose.dev.yml logs -f app-dev
 ```
 
-## Compile and run the project
+### 프로덕션 실행
 
 ```bash
-# development
-$ pnpm run start
+# 환경변수 설정
+cp .env.example .env.production
 
-# watch mode
-$ pnpm run start:dev
+# 프로덕션 환경 실행
+docker-compose up -d
 
-# production mode
-$ pnpm run start:prod
+# 상태 확인
+docker-compose ps
 ```
 
-## Run tests
+## 📊 서비스 구성
+
+| 서비스 | 포트 | 목적 |
+|---------|------|------|
+| NestJS App | 3000 | 메인 API 서버 |
+| PostgreSQL | 5432 | 주 데이터베이스 |
+| PostgreSQL Replica | 5433 | 읽기 전용 복제본 |
+| MongoDB | 27017 | 문서 데이터베이스 |
+| Redis | 6379 | 캐시 및 세션 |
+| RabbitMQ | 5672/15672 | 메시지 큐 |
+| Elasticsearch | 9200 | 검색 엔진 |
+| Nginx | 80/443 | 로드밸런서 |
+
+## 🛠️ 개발 도구
+
+### 데이터베이스 접속
 
 ```bash
-# unit tests
-$ pnpm run test
+# PostgreSQL
+docker exec -it secondhand-postgres-dev psql -U nestjs -d secondhand_dev
 
-# e2e tests
-$ pnpm run test:e2e
+# MongoDB
+docker exec -it secondhand-mongodb-dev mongosh -u root -p password
 
-# test coverage
-$ pnpm run test:cov
+# Redis
+docker exec -it secondhand-redis-dev redis-cli
 ```
 
-## Deployment
+### 관리 UI 접속
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- RabbitMQ 관리 UI: http://localhost:15672 (rabbitmq/password)
+- Elasticsearch: http://localhost:9200
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## 📁 프로젝트 구조
 
-```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+```
+src/
+├── events/              # 이벤트 아키텍처
+├── queues/              # 메시지 큐 시스템  
+├── integrations/        # 외부 API 연동
+├── compliance/          # 규정 준수 모듈
+├── security/            # 보안 및 사기 탐지
+├── auth/                # 인증/인가
+├── users/               # 사용자 관리
+├── products/            # 상품 관리
+├── orders/              # 주문 처리
+├── payments/            # 결제 시스템
+├── shipping/            # 배송 관리
+├── chat/                # 실시간 채팅
+├── notifications/       # 알림 서비스
+└── common/              # 공통 모듈
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🔧 환경 설정
 
-## Resources
+### 필수 환경변수
 
-Check out a few resources that may come in handy when working with NestJS:
+개발환경에서는 `.env.development` 파일을 생성하여 다음 항목들을 설정하세요:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- 데이터베이스 연결 정보
+- JWT 시크릿 키
+- 외부 API 키 (결제, 배송, SMS 등)
+- Redis 및 RabbitMQ 설정
 
-## Support
+### 보안 주의사항
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+- 프로덕션에서는 강력한 비밀번호 사용
+- JWT 시크릿 키는 충분히 복잡하게 설정
+- 외부 API 키는 실제 서비스 키로 교체
 
-## Stay in touch
+## 📚 문서
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- [PRD 문서](./docs/1.%20PRD_중고거래사이트_백엔드.md) - 프로젝트 요구사항 명세서
+- [개발 계획서](./docs/2.%20개발계획서_중고거래사이트_백엔드.md) - 16주 개발 로드맵
 
-## License
+## 🏗️ 아키텍처
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+### 하이브리드 데이터베이스 전략
+- **PostgreSQL**: 트랜잭션, 사용자, 주문 데이터
+- **MongoDB**: 상품, 리뷰, 채팅 메시지
+- **Redis**: 캐시, 세션, Rate Limiting
+- **Elasticsearch**: 상품 검색 및 분석
+
+### 이벤트 기반 아키텍처
+- **Event Sourcing**: 거래 상태 변경 추적
+- **CQRS**: 읽기/쓰기 분리
+- **Saga Pattern**: 분산 트랜잭션 관리
+
+## 📄 라이선스
+
+MIT Licensed

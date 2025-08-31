@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+  # PostgreSQL 개발 데이터베이스
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: secondhand-postgres-dev
+    environment:
+      POSTGRES_DB: secondhand_dev
+      POSTGRES_USER: nestjs
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init-db-dev.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - secondhand-dev-network
+    restart: unless-stopped
+
+  # MongoDB 개발환경
+  mongodb-dev:
+    image: mongo:6-jammy
+    container_name: secondhand-mongodb-dev
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: secondhand_products_dev
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_dev_data:/data/db
+      - ./scripts/init-mongo-dev.js:/docker-entrypoint-initdb.d/init-mongo.js
+    networks:
+      - secondhand-dev-network
+    restart: unless-stopped
+
+  # Redis 개발환경
+  redis-dev:
+    image: redis:7-alpine
+    container_name: secondhand-redis-dev
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - secondhand-dev-network
+    restart: unless-stopped
+
+  # RabbitMQ 개발환경
+  rabbitmq-dev:
+    image: rabbitmq:3.12-management-alpine
+    container_name: secondhand-rabbitmq-dev
+    environment:
+      RABBITMQ_DEFAULT_USER: rabbitmq
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_dev_data:/var/lib/rabbitmq
+    networks:
+      - secondhand-dev-network
+    restart: unless-stopped
+
+  # Elasticsearch 개발환경
+  elasticsearch-dev:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: secondhand-elasticsearch-dev
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+      - xpack.security.enrollment.enabled=false
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_dev_data:/usr/share/elasticsearch/data
+    networks:
+      - secondhand-dev-network
+    restart: unless-stopped
+
+  # NestJS 개발 서버 (핫 리로드)
+  app-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: secondhand-app-dev
+    environment:
+      NODE_ENV: development
+      DB_HOST: postgres-dev
+      MONGO_URI: mongodb://root:password@mongodb-dev:27017/secondhand_products_dev?authSource=admin
+      REDIS_HOST: redis-dev
+      RABBITMQ_URL: amqp://rabbitmq:password@rabbitmq-dev:5672
+      ELASTICSEARCH_HOST: elasticsearch-dev
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # 디버그 포트
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - postgres-dev
+      - mongodb-dev
+      - redis-dev
+      - rabbitmq-dev
+      - elasticsearch-dev
+    networks:
+      - secondhand-dev-network
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:
+  mongodb_dev_data:
+  redis_dev_data:
+  rabbitmq_dev_data:
+  elasticsearch_dev_data:
+
+networks:
+  secondhand-dev-network:
+    driver: bridge
