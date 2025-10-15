@@ -10,7 +10,26 @@ NestJS 기반 중고거래 플랫폼 백엔드 서비스
 
 ## 🚀 빠른 시작
 
-### 개발환경 실행
+### 로컬 개발 환경
+
+```bash
+# 의존성 설치
+pnpm install
+
+# Prisma 클라이언트 생성
+pnpx prisma generate
+
+# 데이터베이스 마이그레이션
+pnpx prisma migrate dev
+
+# 개발 서버 실행
+pnpm start:dev
+
+# Prisma Studio 실행 (데이터베이스 GUI)
+pnpx prisma studio
+```
+
+### Docker 환경 실행
 
 ```bash
 # 환경변수 설정
@@ -54,6 +73,25 @@ docker-compose ps
 | Nginx | 80/443 | 로드밸런서 |
 
 ## 🛠️ 개발 도구
+
+### Prisma 명령어
+
+```bash
+# 스키마 변경 후 마이그레이션 생성
+pnpx prisma migrate dev --name <migration_name>
+
+# 프로덕션 마이그레이션 적용
+pnpx prisma migrate deploy
+
+# 데이터베이스 초기화 (개발 환경)
+pnpx prisma migrate reset
+
+# Prisma Studio 실행
+pnpx prisma studio
+
+# Prisma 클라이언트 재생성
+pnpx prisma generate
+```
 
 ### 데이터베이스 접속
 
@@ -114,14 +152,23 @@ src/
 
 - [PRD 문서](./docs/1.%20PRD_중고거래사이트_백엔드.md) - 프로젝트 요구사항 명세서
 - [개발 계획서](./docs/2.%20개발계획서_중고거래사이트_백엔드.md) - 16주 개발 로드맵
+- [Prisma 마이그레이션 가이드](./docs/Prisma_마이그레이션_가이드.md) - TypeORM에서 Prisma로 마이그레이션 가이드
 
 ## 🏗️ 아키텍처
 
 ### 하이브리드 데이터베이스 전략
-- **PostgreSQL**: 트랜잭션, 사용자, 주문 데이터
-- **MongoDB**: 상품, 리뷰, 채팅 메시지
+- **PostgreSQL + Prisma ORM**: 트랜잭션, 사용자, 주문, 상품 데이터
+- **MongoDB**: 상품 확장 정보, 리뷰, 채팅 메시지
 - **Redis**: 캐시, 세션, Rate Limiting
 - **Elasticsearch**: 상품 검색 및 분석
+
+### Prisma 스키마 구조
+- **User**: 사용자 정보 및 권한 관리
+- **Category**: 계층형 카테고리 (3단계)
+- **Product**: 상품 정보 및 위치 데이터
+- **Order**: 주문 및 배송 정보
+- **Payment**: 결제 및 환불 이력
+- **Review**: 상품 및 판매자 평가
 
 ### 이벤트 기반 아키텍처
 - **Event Sourcing**: 거래 상태 변경 추적
