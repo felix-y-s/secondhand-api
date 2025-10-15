@@ -7,10 +7,10 @@ services:
     container_name: secondhand-postgres
     environment:
       POSTGRES_DB: secondhand_db
-      POSTGRES_USER: nestjs
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
@@ -18,7 +18,7 @@ services:
       - secondhand-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U nestjs -d secondhand_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d secondhand_db"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -29,11 +29,11 @@ services:
     container_name: secondhand-postgres-replica
     environment:
       POSTGRES_DB: secondhand_db
-      POSTGRES_USER: nestjs
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres123
       POSTGRES_MASTER_SERVICE: postgres
     ports:
-      - "5433:5432"
+      - "5434:5432"
     volumes:
       - postgres_replica_data:/var/lib/postgresql/data
     networks:
@@ -48,9 +48,7 @@ services:
     image: mongo:6-jammy
     container_name: secondhand-mongodb
     environment:
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: password
-      MONGO_INITDB_DATABASE: secondhand_products
+      MONGO_INITDB_DATABASE: secondhand_db
     ports:
       - "27017:27017"
     volumes:
@@ -69,12 +67,11 @@ services:
   redis:
     image: redis:7-alpine
     container_name: secondhand-redis
-    command: redis-server --appendonly yes --requirepass password
+    command: redis-server --appendonly yes
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
-      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - secondhand-network
     restart: unless-stopped
@@ -89,14 +86,13 @@ services:
     image: rabbitmq:3.12-management-alpine
     container_name: secondhand-rabbitmq
     environment:
-      RABBITMQ_DEFAULT_USER: rabbitmq
-      RABBITMQ_DEFAULT_PASS: password
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin123
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "5674:5672"
+      - "15674:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     networks:
       - secondhand-network
     restart: unless-stopped

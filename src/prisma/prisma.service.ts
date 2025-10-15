@@ -1,49 +1,103 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 /**
  * Prisma 서비스
- * 데이터베이스 연결 및 트랜잭션 관리를 담당하는 글로벌 서비스
+ * - Prisma Client 연결 관리
+ * - 애플리케이션 생명주기와 연동
+ * - 데이터베이스 연결 풀 관리
  */
 @Injectable()
-export class PrismaService
-  extends PrismaClient
-  implements OnModuleInit, OnModuleDestroy
-{
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
+
+  constructor() {
+    super({
+      log: [
+        {
+          emit: 'event',
+          level: 'query',
+        },
+        {
+          emit: 'event',
+          level: 'error',
+        },
+        {
+          emit: 'event',
+          level: 'info',
+        },
+        {
+          emit: 'event',
+          level: 'warn',
+        },
+      ],
+      errorFormat: 'pretty',
+    });
+
+    // 쿼리 로깅 (개발 환경에서만)
+    if (process.env.NODE_ENV === 'development') {
+      this.$on('query' as never, (e: any) => {
+        this.logger.debug(`Query: ${e.query}`);
+        this.logger.debug(`Params: ${e.params}`);
+        this.logger.debug(`Duration: ${e.duration}ms`);
+      });
+    }
+
+    // 에러 로깅
+    this.$on('error' as never, (e: any) => {
+      this.logger.error(`Prisma Error: ${e.message}`, e.stack);
+    });
+
+    // 경고 로깅
+    this.$on('warn' as never, (e: any) => {
+      this.logger.warn(`Prisma Warning: ${e.message}`);
+    });
+  }
+
   /**
    * 모듈 초기화 시 데이터베이스 연결
    */
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      this.logger.log('✅ PostgreSQL 데이터베이스 연결 성공');
+    } catch (error) {
+      this.logger.error('❌ PostgreSQL 데이터베이스 연결 실패', error);
+      throw error;
+    }
   }
 
   /**
    * 모듈 종료 시 데이터베이스 연결 해제
    */
   async onModuleDestroy() {
-    await this.$disconnect();
+    try {
+      await this.$disconnect();
+      this.logger.log('✅ PostgreSQL 데이터베이스 연결 해제');
+    } catch (error) {
+      this.logger.error('❌ PostgreSQL 데이터베이스 연결 해제 실패', error);
+    }
   }
 
   /**
-   * 데이터베이스 초기화 (테스트 환경에서만 사용)
-   * @warning 프로덕션 환경에서는 절대 사용하지 말 것
+   * 데이터베이스 상태 확인
    */
-  async cleanDatabase() {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('데이터베이스 초기화는 프로덕션에서 사용할 수 없습니다');
+  async healthCheck(): Promise<boolean> {
+    try {
+      await this.$queryRaw`SELECT 1`;
+      return true;
+    } catch (error) {
+      this.logger.error('❌ 데이터베이스 상태 확인 실패', error);
+      return false;
     }
+  }
 
-    const models = Object.keys(this).filter(
-      (key) =>
-        !key.startsWith('_') && !key.startsWith('$') && typeof this[key] === 'object',
-    );
-
-    return Promise.all(
-      models.map((modelKey) => {
-        if (this[modelKey]?.deleteMany) {
-          return this[modelKey].deleteMany();
-        }
-      }),
-    );
+  /**
+   * 트랜잭션 헬퍼
+   */
+  async executeTransaction<T>(
+    operations: (prisma: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>) => Promise<T>,
+  ): Promise<T> {
+    return this.$transaction(operations);
   }
 }

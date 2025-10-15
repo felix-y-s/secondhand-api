@@ -1,10 +1,10 @@
-import { Global, Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 
 /**
  * Prisma 모듈
- * 애플리케이션 전역에서 사용 가능한 Prisma 서비스를 제공
- * @Global 데코레이터를 사용하여 다른 모듈에서 import 없이 사용 가능
+ * - 전역 모듈로 설정하여 애플리케이션 전체에서 사용 가능
+ * - PrismaService를 제공하여 데이터베이스 접근
  */
 @Global()
 @Module({
