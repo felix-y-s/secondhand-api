@@ -13,7 +13,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
-      - ./scripts/init-db-dev.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ../scripts/init-db-dev.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - secondhand-dev-network
     restart: unless-stopped
@@ -30,7 +30,7 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_dev_data:/data/db
-      - ./scripts/init-mongo-dev.js:/docker-entrypoint-initdb.d/init-mongo.js
+      - ../scripts/init-mongo-dev.js:/docker-entrypoint-initdb.d/init-mongo.js
     networks:
       - secondhand-dev-network
     restart: unless-stopped
@@ -39,14 +39,20 @@ services:
   redis-dev:
     image: redis:7-alpine
     container_name: secondhand-redis-dev
-    command: redis-server --appendonly yes
+    command: redis-server /usr/local/etc/redis/redis.conf
     ports:
       - "6379:6379"
     volumes:
       - redis_dev_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - secondhand-dev-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "password", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   # RabbitMQ 개발환경
   rabbitmq-dev:
@@ -60,9 +66,15 @@ services:
       - "15672:15672"
     volumes:
       - rabbitmq_dev_data:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     networks:
       - secondhand-dev-network
     restart: unless-stopped
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
 
   # Elasticsearch 개발환경
   elasticsearch-dev:
@@ -84,8 +96,8 @@ services:
   # NestJS 개발 서버 (핫 리로드)
   app-dev:
     build:
-      context: .
-      dockerfile: Dockerfile.dev
+      context: ..
+      dockerfile: docker/Dockerfile.dev
     container_name: secondhand-app-dev
     environment:
       NODE_ENV: development
@@ -98,7 +110,7 @@ services:
       - "3000:3000"
       - "9229:9229"  # 디버그 포트
     volumes:
-      - .:/usr/src/app
+      - ..:/usr/src/app
       - /usr/src/app/node_modules
     depends_on:
       - postgres-dev

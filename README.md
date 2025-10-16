@@ -40,10 +40,13 @@ chmod +x scripts/generate-ssl.sh
 ./scripts/generate-ssl.sh
 
 # 개발환경 실행
-docker-compose -f docker-compose.dev.yml up -d
+pnpm docker:dev:up
 
 # 애플리케이션 로그 확인
-docker-compose -f docker-compose.dev.yml logs -f app-dev
+pnpm docker:dev:logs
+
+# 개발환경 종료
+pnpm docker:dev:down
 ```
 
 ### 프로덕션 실행
@@ -52,11 +55,17 @@ docker-compose -f docker-compose.dev.yml logs -f app-dev
 # 환경변수 설정
 cp .env.example .env.production
 
-# 프로덕션 환경 실행
-docker-compose up -d
+# 프로덕션 이미지 빌드
+pnpm docker:build
 
-# 상태 확인
-docker-compose ps
+# 프로덕션 환경 실행
+pnpm docker:prod:up
+
+# 로그 확인
+pnpm docker:prod:logs
+
+# 프로덕션 환경 종료
+pnpm docker:prod:down
 ```
 
 ## 📊 서비스 구성

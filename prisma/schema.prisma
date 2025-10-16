@@ -8,9 +8,9 @@ generator client {
 
 // ERD 생성기 (필요시 주석 해제)
 // Chromium 필요: npx puppeteer browsers install chrome
-// generator erd {
-//   provider = "prisma-erd-generator"
-// }
+generator erd {
+  provider = "prisma-erd-generator"
+}
 
 datasource db {
   provider = "postgresql"

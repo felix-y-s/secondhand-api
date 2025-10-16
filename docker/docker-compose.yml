@@ -13,7 +13,7 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ../scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - secondhand-network
     restart: unless-stopped
@@ -53,7 +53,7 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-      - ./scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+      - ../scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
     networks:
       - secondhand-network
     restart: unless-stopped
@@ -67,16 +67,17 @@ services:
   redis:
     image: redis:7-alpine
     container_name: secondhand-redis
-    command: redis-server --appendonly yes
+    command: redis-server /usr/local/etc/redis/redis.conf
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
     networks:
       - secondhand-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "password", "ping"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -93,6 +94,7 @@ services:
       - "15674:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+      - ./config/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
     networks:
       - secondhand-network
     restart: unless-stopped
@@ -134,7 +136,7 @@ services:
       - "443:443"
     volumes:
       - ./config/nginx.conf:/etc/nginx/nginx.conf
-      - ./ssl:/etc/nginx/ssl
+      - ../ssl:/etc/nginx/ssl
     networks:
       - secondhand-network
     depends_on:
@@ -144,8 +146,8 @@ services:
   # NestJS 애플리케이션 (프로덕션)
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     container_name: secondhand-app
     environment:
       NODE_ENV: production
