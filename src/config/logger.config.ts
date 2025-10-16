@@ -25,17 +25,39 @@ const maskSensitiveData = winston.format((info) => {
 });
 
 /**
+ * 거래 로그만 필터링 (개발 환경에서만 사용)
+ * TransactionLogger 컨텍스트만 통과
+ */
+const transactionOnly = winston.format((info) => {
+  return info.context === 'TransactionLogger' ? info : false;
+});
+
+/**
+ * 거래 로그 제외 필터 (개발 환경에서만 사용)
+ * TransactionLogger 컨텍스트 제외
+ */
+const excludeTransaction = winston.format((info) => {
+  return info.context !== 'TransactionLogger' ? info : false;
+});
+
+/**
+ * 개발 환경 여부 확인
+ */
+const isDevelopment = process.env.NODE_ENV !== 'production';
+
+/**
  * Winston 로거 설정
  * - 콘솔 출력 (개발 환경)
  * - 파일 로테이션 (프로덕션 환경)
  * - 민감정보 자동 마스킹
  * - 거래 로그 별도 보관
+ * - 개발 환경: 거래 로그 분리, 프로덕션: 모든 로그 백업
  */
 export const winstonConfig: WinstonModuleOptions = {
   transports: [
     // 콘솔 출력 (개발 환경)
     new winston.transports.Console({
-      level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+      level: isDevelopment ? 'debug' : 'info',
       format: winston.format.combine(
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
         winston.format.ms(),
@@ -46,7 +68,7 @@ export const winstonConfig: WinstonModuleOptions = {
       ),
     }),
 
-    // 에러 로그 파일 (프로덕션)
+    // 에러 로그 파일
     new DailyRotateFile({
       level: 'error',
       dirname: 'logs',
@@ -57,12 +79,14 @@ export const winstonConfig: WinstonModuleOptions = {
       maxFiles: '14d',
       format: winston.format.combine(
         winston.format.timestamp(),
+        // 개발 환경: 거래 로그 제외, 프로덕션: 모두 포함
+        isDevelopment ? excludeTransaction() : winston.format((info) => info)(),
         maskSensitiveData(),
         winston.format.json(),
       ),
     }),
 
-    // 전체 로그 파일 (프로덕션)
+    // 전체 로그 파일
     new DailyRotateFile({
       level: 'info',
       dirname: 'logs',
@@ -73,6 +97,8 @@ export const winstonConfig: WinstonModuleOptions = {
       maxFiles: '14d',
       format: winston.format.combine(
         winston.format.timestamp(),
+        // 개발 환경: 거래 로그 제외, 프로덕션: 모두 포함
+        isDevelopment ? excludeTransaction() : winston.format((info) => info)(),
         maskSensitiveData(),
         winston.format.json(),
       ),
@@ -89,12 +115,14 @@ export const winstonConfig: WinstonModuleOptions = {
       maxFiles: '30d', // 30일 보관 (전자상거래법 준수)
       format: winston.format.combine(
         winston.format.timestamp(),
+        // 개발 환경: 거래 로그만, 프로덕션: 모두 포함
+        isDevelopment ? transactionOnly() : winston.format((info) => info)(),
         winston.format.json(),
       ),
     }),
 
     // 디버그 로그 (개발 환경만)
-    ...(process.env.NODE_ENV !== 'production'
+    ...(isDevelopment
       ? [
           new DailyRotateFile({
             level: 'debug',
@@ -105,6 +133,8 @@ export const winstonConfig: WinstonModuleOptions = {
             maxFiles: '3d',
             format: winston.format.combine(
               winston.format.timestamp(),
+              // 거래 로그 제외
+              excludeTransaction(),
               winston.format.json(),
             ),
           }),
