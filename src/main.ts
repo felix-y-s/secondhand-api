@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -10,6 +11,9 @@ async function bootstrap() {
 
   // Winston 로거를 애플리케이션 로거로 설정
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
+
+  // HTTP 요청 로깅 인터셉터 등록
+  app.useGlobalInterceptors(new LoggingInterceptor(app.get(WINSTON_MODULE_NEST_PROVIDER)));
 
   // Swagger 설정
   const config = new DocumentBuilder()
