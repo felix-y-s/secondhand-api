@@ -1,14 +1,18 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Inject } from '@nestjs/common';
 import type { LoggerService } from '@nestjs/common';
 import { AppService } from './app.service';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { MongodbService } from './database/mongodb/mongodb.service';
+import { RedisService } from './database/redis/redis.service';
 
 @ApiTags('health')
 @Controller()
 export class AppController {
   constructor(
     private readonly appService: AppService,
+    private readonly mongodbService: MongodbService,
+    private readonly redisService: RedisService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
   ) {}
@@ -27,7 +31,6 @@ export class AppController {
     },
   })
   getHello(): string {
-    this.logger.log('Hello World!', 'TransactionLogger');
     return this.appService.getHello();
   }
 
