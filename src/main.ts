@@ -1,9 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bufferLogs: true, // Winston이 로그를 버퍼링할 수 있도록 설정
+  });
+
+  // Winston 로거를 애플리케이션 로거로 설정
+  app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   // Swagger 설정
   const config = new DocumentBuilder()

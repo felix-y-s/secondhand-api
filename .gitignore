@@ -60,3 +60,4 @@ ssl
 
 # Serena MCP
 .serena
+logs/
