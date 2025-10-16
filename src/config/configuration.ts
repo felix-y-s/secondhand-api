@@ -7,7 +7,7 @@ export default () => ({
   // 애플리케이션 기본 설정
   app: {
     nodeEnv: process.env.NODE_ENV || 'development',
-    port: parseInt(process.env.PORT, 10) || 3000,
+    port: parseInt(process.env.PORT || '3000', 10),
     apiPrefix: process.env.API_PREFIX || 'api',
     apiVersion: process.env.API_VERSION || 'v1',
     corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
@@ -17,7 +17,7 @@ export default () => ({
   database: {
     postgres: {
       host: process.env.POSTGRES_HOST || 'localhost',
-      port: parseInt(process.env.POSTGRES_PORT, 10) || 5433,
+      port: parseInt(process.env.POSTGRES_PORT || '5433', 10),
       user: process.env.POSTGRES_USER || 'postgres',
       password: process.env.POSTGRES_PASSWORD || 'postgres123',
       database: process.env.POSTGRES_DB || 'secondhand_db',
@@ -28,7 +28,7 @@ export default () => ({
     },
     redis: {
       host: process.env.REDIS_HOST || 'localhost',
-      port: parseInt(process.env.REDIS_PORT, 10) || 6379,
+      port: parseInt(process.env.REDIS_PORT || '6379', 10),
       password: process.env.REDIS_PASSWORD || undefined,
     },
   },
@@ -36,11 +36,11 @@ export default () => ({
   // RabbitMQ 설정
   rabbitmq: {
     host: process.env.RABBITMQ_HOST || 'localhost',
-    port: parseInt(process.env.RABBITMQ_PORT, 10) || 5674,
+    port: parseInt(process.env.RABBITMQ_PORT || '5674', 10),
     user: process.env.RABBITMQ_USER || 'admin',
     password: process.env.RABBITMQ_PASSWORD || 'admin123',
     vhost: process.env.RABBITMQ_VHOST || '/',
-    managementPort: parseInt(process.env.RABBITMQ_MANAGEMENT_PORT, 10) || 15674,
+    managementPort: parseInt(process.env.RABBITMQ_MANAGEMENT_PORT || '15674', 10),
   },
 
   // JWT 인증 설정
@@ -53,9 +53,9 @@ export default () => ({
 
   // 보안 설정
   security: {
-    bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS, 10) || 10,
-    throttleTtl: parseInt(process.env.THROTTLE_TTL, 10) || 60,
-    throttleLimit: parseInt(process.env.THROTTLE_LIMIT, 10) || 100,
+    bcryptSaltRounds: parseInt(process.env.BCRYPT_SALT_ROUNDS || '10', 10),
+    throttleTtl: parseInt(process.env.THROTTLE_TTL || '60', 10),
+    throttleLimit: parseInt(process.env.THROTTLE_LIMIT || '100', 10),
   },
 
   // AWS S3 설정
@@ -68,7 +68,7 @@ export default () => ({
 
   // 파일 업로드 설정
   upload: {
-    maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 10485760, // 10MB
+    maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '10485760', 10), // 10MB
     allowedFileTypes: process.env.ALLOWED_FILE_TYPES?.split(',') || [
       'image/jpeg',
       'image/png',
