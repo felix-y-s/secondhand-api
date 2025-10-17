@@ -25,25 +25,29 @@ model User {
   id            String   @id @default(uuid())
   email         String   @unique
   password      String
+  name          String?
   nickname      String   @unique
   phoneNumber   String?  @unique
   profileImage  String?
   bio           String?  @db.Text
-  
+
+  // 역할 및 권한 (Phase 1 RBAC 연동)
+  role          Role     @default(USER)
+
   // 인증 관련
   emailVerified Boolean  @default(false)
   phoneVerified Boolean  @default(false)
   isActive      Boolean  @default(true)
-  
+
   // 평점 및 신뢰도
   rating        Float    @default(0)
   ratingCount   Int      @default(0)
-  
+
   // 타임스탬프
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   lastLoginAt   DateTime?
-  
+
   // 관계
   products      Product[]
   orders        Order[]     @relation("buyer")
@@ -54,8 +58,20 @@ model User {
   messages      ChatMessage[]
   favorites     Favorite[]
   notifications Notification[]
-  
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
   @@map("users")
+}
+
+// Phase 1 RBAC과 동기화된 역할 정의
+enum Role {
+  ADMIN   // 관리자 (시스템 전체 관리)
+  USER    // 일반 사용자
+  SELLER  // 판매자
+  BUYER   // 구매자
+  GUEST   // 게스트 (제한된 권한)
 }
 
 // ===================================
@@ -70,6 +86,11 @@ model Category {
   order     Int       @default(0)
   isActive  Boolean   @default(true)
   
+  // 계층 구조 지원
+  parentId  String?
+  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  
   // 관계
   products  Product[]
   
@@ -77,6 +98,8 @@ model Category {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   
+  @@index([parentId])
+  @@index([slug])
   @@map("categories")
 }
 
@@ -121,6 +144,10 @@ model Product {
   @@index([categoryId])
   @@index([status])
   @@index([createdAt])
+  @@index([price])
+  @@index([status, createdAt])
+  @@index([categoryId, status])
+  @@index([latitude, longitude])
   @@map("products")
 }
 
