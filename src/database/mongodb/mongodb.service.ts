@@ -17,6 +17,21 @@ export class MongodbService {
     private messageModel: Model<Message>,
   ) {}
 
+  /**
+   * MongoDB 연결 상태 확인
+   *
+   * @returns 연결 여부
+   */
+  async isConnected(): Promise<boolean> {
+    try {
+      const state = this.productDetailModel.db.readyState;
+      // 0 = disconnected, 1 = connected, 2 = connecting, 3 = disconnecting
+      return state === 1;
+    } catch (error) {
+      return false;
+    }
+  }
+
   // ===== ProductDetail CRUD =====
 
   /**

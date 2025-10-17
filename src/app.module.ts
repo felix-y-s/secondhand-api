@@ -11,6 +11,7 @@ import { MongodbModule } from './database/mongodb/mongodb.module';
 import { RedisModule } from './database/redis/redis.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { EventsModule } from './events/events.module';
+import { HealthModule } from './health/health.module';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
@@ -42,6 +43,8 @@ import { winstonConfig } from './config/logger.config';
     RabbitMQModule,
     // Events 모듈 (이벤트 발행/구독, 전역 사용 가능) - RabbitMQModule 이후 로드
     EventsModule,
+    // Health 모듈 (헬스체크 엔드포인트)
+    HealthModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
