@@ -162,6 +162,7 @@ src/
 - [PRD 문서](./docs/1.%20PRD_중고거래사이트_백엔드.md) - 프로젝트 요구사항 명세서
 - [개발 계획서](./docs/2.%20개발계획서_중고거래사이트_백엔드.md) - 16주 개발 로드맵
 - [Prisma 마이그레이션 가이드](./docs/Prisma_마이그레이션_가이드.md) - TypeORM에서 Prisma로 마이그레이션 가이드
+- [RabbitMQ/Events 통합 가이드](./docs/rabbitmq-events-guide.md) - 이벤트 기반 아키텍처 가이드 ⭐ **NEW**
 
 ## 🏗️ 아키텍처
 
@@ -179,10 +180,21 @@ src/
 - **Payment**: 결제 및 환불 이력
 - **Review**: 상품 및 판매자 평가
 
-### 이벤트 기반 아키텍처
+### 이벤트 기반 아키텍처 ⭐ **구현 완료**
 - **Event Sourcing**: 거래 상태 변경 추적
 - **CQRS**: 읽기/쓰기 분리
 - **Saga Pattern**: 분산 트랜잭션 관리
+- **Hybrid Events**: 로컬(EventEmitter) + 분산(RabbitMQ) 이벤트 시스템
+- **Dead Letter Queue (DLQ)**: 실패한 메시지 자동 처리
+- **Priority Queue**: 우선순위 기반 메시지 처리
+
+#### 주요 특징
+- ✅ 도메인별 이벤트 타입 정의 (User, Product, Order, Payment, Notification)
+- ✅ 자동 재연결 및 복원력 (Exponential Backoff)
+- ✅ TypeScript 타입 안전성 보장
+- ✅ 통합 테스트 및 실제 사용 예제 제공
+
+📘 **자세한 내용**: [RabbitMQ/Events 통합 가이드](./docs/rabbitmq-events-guide.md)
 
 ## 📄 라이선스
 
