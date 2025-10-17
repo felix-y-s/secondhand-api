@@ -3,3 +3,4 @@
  */
 
 export * from './skip-throttle.decorator';
+export * from './api-responses.decorator';

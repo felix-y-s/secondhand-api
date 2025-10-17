@@ -113,11 +113,37 @@ async function bootstrap() {
     exclude: ['health', 'api-docs'], // 헬스체크와 API 문서는 제외
   });
 
-  // Swagger 설정
+  /**
+   * Swagger API 문서 설정
+   *
+   * - JWT Bearer 인증 지원
+   * - API 태그별 분류 (users, products, orders, payments, chat, notifications, health)
+   * - Rate Limiting 정보 포함
+   * - 환경별 서버 URL 설정
+   */
   const config = new DocumentBuilder()
     .setTitle('중고거래 플랫폼 API')
-    .setDescription('중고거래 플랫폼 백엔드 API 문서')
+    .setDescription(
+      '중고거래 플랫폼 백엔드 API 문서\n\n' +
+        '**Rate Limiting 정책**:\n' +
+        '- Short (민감한 API): 1분당 10회\n' +
+        '- Medium (CRUD API): 1분당 30회\n' +
+        '- Long (읽기 API): 1분당 100회\n\n' +
+        '**인증**:\n' +
+        '- JWT Bearer Token 방식\n' +
+        '- Access Token 유효기간: 15분\n' +
+        '- Refresh Token 유효기간: 7일\n\n' +
+        '**API 버전**: v1\n' +
+        '**Base URL**: /api/v1',
+    )
     .setVersion('1.0')
+    .setContact('Backend Team', 'https://github.com/yourusername/secondhand-api', 'backend@example.com')
+    .setLicense('MIT', 'https://opensource.org/licenses/MIT')
+    .addServer(process.env.API_URL || 'http://localhost:3000', '개발 서버')
+    .addServer('https://staging.api.example.com', '스테이징 서버')
+    .addServer('https://api.example.com', '프로덕션 서버')
+    .addTag('health', '헬스체크 및 모니터링')
+    .addTag('auth', '인증 및 권한')
     .addTag('users', '사용자 관리')
     .addTag('products', '상품 관리')
     .addTag('orders', '주문 관리')
@@ -130,10 +156,21 @@ async function bootstrap() {
         scheme: 'bearer',
         bearerFormat: 'JWT',
         name: 'JWT',
-        description: 'JWT 토큰을 입력하세요',
+        description: 'JWT 액세스 토큰을 입력하세요 (Bearer 제외)',
         in: 'header',
       },
       'access-token',
+    )
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT Refresh',
+        description: 'JWT 리프레시 토큰을 입력하세요 (Bearer 제외)',
+        in: 'header',
+      },
+      'refresh-token',
     )
     .build();
 
