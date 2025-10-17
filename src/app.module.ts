@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { WinstonModule } from 'nest-winston';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
@@ -9,6 +11,7 @@ import { MongodbModule } from './database/mongodb/mongodb.module';
 import { RedisModule } from './database/redis/redis.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
 import { EventsModule } from './events/events.module';
+import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { winstonConfig } from './config/logger.config';
@@ -39,8 +42,36 @@ import { winstonConfig } from './config/logger.config';
     RabbitMQModule,
     // Events 모듈 (이벤트 발행/구독, 전역 사용 가능) - RabbitMQModule 이후 로드
     EventsModule,
+    // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => [
+        {
+          name: 'short', // 짧은 시간 제한 (예: 로그인, 민감한 API)
+          ttl: 60000, // 1분 (밀리초)
+          limit: 10, // 1분당 10회
+        },
+        {
+          name: 'medium', // 중간 시간 제한 (일반 API)
+          ttl: 60000, // 1분
+          limit: 30, // 1분당 30회
+        },
+        {
+          name: 'long', // 긴 시간 제한 (읽기 전용 API)
+          ttl: 60000, // 1분
+          limit: 100, // 1분당 100회
+        },
+      ],
+    }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Rate Limiting 전역 가드 (@SkipThrottle 데코레이터 지원)
+    {
+      provide: APP_GUARD,
+      useClass: CustomThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
