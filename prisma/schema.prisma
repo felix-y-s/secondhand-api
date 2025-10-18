@@ -1,13 +1,8 @@
-// Prisma Schema for Secondhand Trading Platform
-// PostgreSQL 데이터베이스 설정
-
 generator client {
   provider = "prisma-client-js"
   output   = "../node_modules/.prisma/client"
 }
 
-// ERD 생성기 (필요시 주석 해제)
-// Chromium 필요: npx puppeteer browsers install chrome
 generator erd {
   provider = "prisma-erd-generator"
 }
@@ -17,47 +12,33 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ===================================
-// 사용자 관리
-// ===================================
-
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  password      String
-  name          String?
-  nickname      String   @unique
-  phoneNumber   String?  @unique
-  profileImage  String?
-  bio           String?  @db.Text
-
-  // 역할 및 권한 (Phase 1 RBAC 연동)
-  role          Role     @default(USER)
-
-  // 인증 관련
-  emailVerified Boolean  @default(false)
-  phoneVerified Boolean  @default(false)
-  isActive      Boolean  @default(true)
-
-  // 평점 및 신뢰도
-  rating        Float    @default(0)
-  ratingCount   Int      @default(0)
-
-  // 타임스탬프
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  lastLoginAt   DateTime?
-
-  // 관계
-  products      Product[]
-  orders        Order[]     @relation("buyer")
-  sales         Order[]     @relation("seller")
-  reviews       Review[]    @relation("reviewer")
-  receivedReviews Review[]  @relation("reviewed")
-  chatRooms     ChatRoomMember[]
-  messages      ChatMessage[]
-  favorites     Favorite[]
-  notifications Notification[]
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  name            String?
+  nickname        String           @unique
+  phoneNumber     String?          @unique
+  profileImage    String?
+  bio             String?
+  role            Role             @default(USER)
+  emailVerified   Boolean          @default(false)
+  phoneVerified   Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  rating          Float            @default(0)
+  ratingCount     Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  lastLoginAt     DateTime?
+  messages        ChatMessage[]
+  chatRooms       ChatRoomMember[]
+  favorites       Favorite[]
+  notifications   Notification[]
+  orders          Order[]          @relation("buyer")
+  sales           Order[]          @relation("seller")
+  products        Product[]
+  receivedReviews Review[]         @relation("reviewed")
+  reviews         Review[]         @relation("reviewer")
 
   @@index([email])
   @@index([role])
@@ -65,81 +46,50 @@ model User {
   @@map("users")
 }
 
-// Phase 1 RBAC과 동기화된 역할 정의
-enum Role {
-  ADMIN   // 관리자 (시스템 전체 관리)
-  USER    // 일반 사용자
-  SELLER  // 판매자
-  BUYER   // 구매자
-  GUEST   // 게스트 (제한된 권한)
-}
-
-// ===================================
-// 상품 관리
-// ===================================
-
 model Category {
-  id        String    @id @default(uuid())
-  name      String    @unique
-  slug      String    @unique
+  id        String     @id @default(uuid())
+  name      String     @unique
+  slug      String     @unique
   icon      String?
-  order     Int       @default(0)
-  isActive  Boolean   @default(true)
-  
-  // 계층 구조 지원
+  order     Int        @default(0)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   parentId  String?
-  parent    Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
   children  Category[] @relation("CategoryHierarchy")
-  
-  // 관계
   products  Product[]
-  
-  // 타임스탬프
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  
+
   @@index([parentId])
   @@index([slug])
   @@map("categories")
 }
 
 model Product {
-  id          String   @id @default(uuid())
-  sellerId    String
-  categoryId  String
-  
-  // 상품 기본 정보
-  title       String   @db.VarChar(100)
-  description String   @db.Text
-  price       Int
-  condition   ProductCondition
-  status      ProductStatus    @default(ACTIVE)
-  
-  // 거래 방식
-  shippingAvailable Boolean  @default(false)
-  localPickup       Boolean  @default(true)
+  id                String           @id @default(uuid())
+  sellerId          String
+  categoryId        String
+  title             String           @db.VarChar(100)
+  description       String
+  price             Int
+  condition         ProductCondition
+  status            ProductStatus    @default(ACTIVE)
+  shippingAvailable Boolean          @default(false)
+  localPickup       Boolean          @default(true)
   location          String?
   latitude          Float?
   longitude         Float?
-  
-  // 상품 이미지
-  images      String[]         @default([])
-  thumbnail   String?
-  
-  // 조회수 및 통계
-  viewCount   Int      @default(0)
-  
-  // 타임스탬프
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  soldAt      DateTime?
-  
-  // 관계
-  seller      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  category    Category @relation(fields: [categoryId], references: [id])
-  orders      Order[]
-  favorites   Favorite[]
-  
+  images            String[]         @default([])
+  thumbnail         String?
+  viewCount         Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  soldAt            DateTime?
+  favorites         Favorite[]
+  orders            Order[]
+  category          Category         @relation(fields: [categoryId], references: [id])
+  seller            User             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
   @@index([sellerId])
   @@index([categoryId])
   @@index([status])
@@ -151,62 +101,33 @@ model Product {
   @@map("products")
 }
 
-enum ProductCondition {
-  NEW          // 새 상품
-  LIKE_NEW     // 거의 새것
-  GOOD         // 좋음
-  FAIR         // 보통
-  POOR         // 나쁨
-}
-
-enum ProductStatus {
-  ACTIVE       // 판매중
-  RESERVED     // 예약중
-  SOLD         // 판매완료
-  DELETED      // 삭제됨
-}
-
-// ===================================
-// 주문 관리
-// ===================================
-
 model Order {
-  id         String      @id @default(uuid())
-  buyerId    String
-  sellerId   String
-  productId  String
-  
-  // 주문 정보
-  orderNumber   String   @unique
-  totalAmount   Int
-  shippingFee   Int      @default(0)
-  status        OrderStatus    @default(PENDING)
-  
-  // 배송 정보 (배송 거래인 경우)
-  recipientName     String?
-  recipientPhone    String?
-  shippingAddress   String?
-  shippingPostcode  String?
-  trackingNumber    String?
-  
-  // 결제 정보
-  paymentMethod     PaymentMethod?
-  paymentId         String?  @unique
-  paidAt            DateTime?
-  
-  // 타임스탬프
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  confirmedAt       DateTime?
-  completedAt       DateTime?
-  cancelledAt       DateTime?
-  
-  // 관계
-  buyer             User     @relation("buyer", fields: [buyerId], references: [id])
-  seller            User     @relation("seller", fields: [sellerId], references: [id])
-  product           Product  @relation(fields: [productId], references: [id])
-  review            Review?
-  
+  id               String         @id @default(uuid())
+  buyerId          String
+  sellerId         String
+  productId        String
+  orderNumber      String         @unique
+  totalAmount      Int
+  shippingFee      Int            @default(0)
+  status           OrderStatus    @default(PENDING)
+  recipientName    String?
+  recipientPhone   String?
+  shippingAddress  String?
+  shippingPostcode String?
+  trackingNumber   String?
+  paymentMethod    PaymentMethod?
+  paymentId        String?        @unique
+  paidAt           DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  confirmedAt      DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  buyer            User           @relation("buyer", fields: [buyerId], references: [id])
+  product          Product        @relation(fields: [productId], references: [id])
+  seller           User           @relation("seller", fields: [sellerId], references: [id])
+  review           Review?
+
   @@index([buyerId])
   @@index([sellerId])
   @@index([productId])
@@ -214,121 +135,140 @@ model Order {
   @@map("orders")
 }
 
-enum OrderStatus {
-  PENDING          // 주문 대기
-  PAYMENT_PENDING  // 결제 대기
-  PAID             // 결제 완료
-  SHIPPING         // 배송중
-  DELIVERED        // 배송 완료
-  CONFIRMED        // 구매 확정
-  CANCELLED        // 주문 취소
-  REFUNDED         // 환불 완료
-}
-
-enum PaymentMethod {
-  CARD             // 신용카드
-  BANK_TRANSFER    // 계좌이체
-  VIRTUAL_ACCOUNT  // 가상계좌
-  KAKAOPAY         // 카카오페이
-  TOSSPAY          // 토스페이
-  MEET_IN_PERSON   // 직거래
-}
-
-// ===================================
-// 리뷰 시스템
-// ===================================
-
 model Review {
   id         String   @id @default(uuid())
   orderId    String   @unique
   reviewerId String
   reviewedId String
-  
-  // 리뷰 내용
-  rating     Int      // 1-5 별점
-  comment    String?  @db.Text
-  
-  // 타임스탬프
+  rating     Int
+  comment    String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-  
-  // 관계
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  reviewer   User     @relation("reviewer", fields: [reviewerId], references: [id])
   reviewed   User     @relation("reviewed", fields: [reviewedId], references: [id])
-  
+  reviewer   User     @relation("reviewer", fields: [reviewerId], references: [id])
+
   @@index([reviewerId])
   @@index([reviewedId])
   @@map("reviews")
 }
 
-// ===================================
-// 채팅 시스템
-// ===================================
-
 model ChatRoom {
-  id        String   @id @default(uuid())
-  
-  // 채팅방 정보
+  id        String           @id @default(uuid())
   productId String?
-  
-  // 타임스탬프
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // 관계
-  members   ChatRoomMember[]
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
   messages  ChatMessage[]
-  
+  members   ChatRoomMember[]
+
   @@map("chat_rooms")
 }
 
 model ChatRoomMember {
-  id         String   @id @default(uuid())
+  id         String    @id @default(uuid())
   chatRoomId String
   userId     String
-  
-  // 마지막 읽은 메시지
   lastReadAt DateTime?
-  
-  // 타임스탬프
-  joinedAt   DateTime @default(now())
-  
-  // 관계
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  joinedAt   DateTime  @default(now())
+  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([chatRoomId, userId])
   @@map("chat_room_members")
 }
 
 model ChatMessage {
-  id         String   @id @default(uuid())
-  chatRoomId String
-  senderId   String
-  
-  // 메시지 내용
-  content    String   @db.Text
+  id          String      @id @default(uuid())
+  chatRoomId  String
+  senderId    String
+  content     String
   messageType MessageType @default(TEXT)
-  
-  // 파일 정보 (이미지/파일 전송 시)
-  fileUrl    String?
-  fileName   String?
-  
-  // 읽음 여부
-  isRead     Boolean  @default(false)
-  readAt     DateTime?
-  
-  // 타임스탬프
-  createdAt  DateTime @default(now())
-  
-  // 관계
-  chatRoom   ChatRoom @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
-  sender     User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-  
+  fileUrl     String?
+  fileName    String?
+  isRead      Boolean     @default(false)
+  readAt      DateTime?
+  createdAt   DateTime    @default(now())
+  chatRoom    ChatRoom    @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
   @@index([chatRoomId])
   @@index([senderId])
   @@map("chat_messages")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("favorites")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  relatedId   String?
+  relatedType String?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+enum Role {
+  ADMIN
+  USER
+  SELLER
+  BUYER
+  GUEST
+}
+
+enum ProductCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  POOR
+}
+
+enum ProductStatus {
+  ACTIVE
+  RESERVED
+  SOLD
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_PENDING
+  PAID
+  SHIPPING
+  DELIVERED
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  VIRTUAL_ACCOUNT
+  KAKAOPAY
+  TOSSPAY
+  MEET_IN_PERSON
 }
 
 enum MessageType {
@@ -338,67 +278,13 @@ enum MessageType {
   SYSTEM
 }
 
-// ===================================
-// 찜하기 (Favorites)
-// ===================================
-
-model Favorite {
-  id        String   @id @default(uuid())
-  userId    String
-  productId String
-  
-  // 타임스탬프
-  createdAt DateTime @default(now())
-  
-  // 관계
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  
-  @@unique([userId, productId])
-  @@index([userId])
-  @@index([productId])
-  @@map("favorites")
-}
-
-// ===================================
-// 알림 시스템
-// ===================================
-
-model Notification {
-  id      String           @id @default(uuid())
-  userId  String
-  
-  // 알림 내용
-  type    NotificationType
-  title   String
-  message String           @db.Text
-  
-  // 연관 데이터
-  relatedId   String?      // 상품ID, 주문ID 등
-  relatedType String?      // product, order, chat 등
-  
-  // 읽음 여부
-  isRead  Boolean          @default(false)
-  readAt  DateTime?
-  
-  // 타임스탬프
-  createdAt DateTime       @default(now())
-  
-  // 관계
-  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  @@index([userId])
-  @@index([isRead])
-  @@map("notifications")
-}
-
 enum NotificationType {
-  PRODUCT_LIKED      // 상품 찜
-  NEW_MESSAGE        // 새 메시지
-  ORDER_CREATED      // 주문 생성
-  ORDER_CONFIRMED    // 주문 확정
-  ORDER_CANCELLED    // 주문 취소
-  PAYMENT_COMPLETED  // 결제 완료
-  REVIEW_RECEIVED    // 리뷰 받음
-  SYSTEM             // 시스템 알림
+  PRODUCT_LIKED
+  NEW_MESSAGE
+  ORDER_CREATED
+  ORDER_CONFIRMED
+  ORDER_CANCELLED
+  PAYMENT_COMPLETED
+  REVIEW_RECEIVED
+  SYSTEM
 }

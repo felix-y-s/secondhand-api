@@ -16,6 +16,7 @@ import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { winstonConfig } from './config/logger.config';
+import { UsersModule } from './modules/users/users.module';
 
 @Module({
   imports: [
@@ -45,6 +46,8 @@ import { winstonConfig } from './config/logger.config';
     EventsModule,
     // Health 모듈 (헬스체크 엔드포인트)
     HealthModule,
+    // Users 모듈 (사용자 관리)
+    UsersModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
