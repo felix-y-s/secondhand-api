@@ -49,8 +49,8 @@ export class RolesGuard implements CanActivate {
     }
 
     // 요청에서 사용자 정보 추출 (JwtAuthGuard에서 설정된 user)
-    const request = context.switchToHttp().getRequest();
-    const user: JwtValidationResult = request.user;
+    const request = context.switchToHttp().getRequest<{ user: JwtValidationResult }>();
+    const user = request.user;
 
     // 사용자 정보가 없으면 권한 없음
     if (!user) {

@@ -32,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
    * @returns 검증된 사용자 정보
    * @throws UnauthorizedException - 토큰이 유효하지 않은 경우
    */
-  async validate(payload: JwtPayload): Promise<JwtValidationResult> {
+  validate(payload: JwtPayload): JwtValidationResult {
     // 토큰 타입 검증 (Access Token만 허용)
     if (payload.type && payload.type !== 'access') {
       throw new UnauthorizedException('유효하지 않은 토큰 타입입니다');

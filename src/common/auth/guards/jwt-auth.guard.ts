@@ -49,7 +49,14 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @param err - 발생한 에러
    * @param user - 사용자 정보
    */
-  handleRequest(err: Error | null, user: JwtValidationResult | null) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  handleRequest<TUser = any>(
+    err: any,
+    user: any,
+    _info: any,
+    _context: ExecutionContext,
+    _status?: any,
+  ): TUser {
     // 에러가 발생했거나 사용자 정보가 없는 경우
     if (err || !user) {
       throw err || new UnauthorizedException('인증에 실패했습니다');
