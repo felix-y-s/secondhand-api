@@ -77,8 +77,12 @@ describe('JWT Authentication', () => {
         type: 'refresh',
       };
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(UnauthorizedException);
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow('유효하지 않은 토큰 타입입니다');
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        '유효하지 않은 토큰 타입입니다',
+      );
     });
 
     it('sub 필드가 누락되면 에러를 발생시켜야 함', async () => {
@@ -87,8 +91,12 @@ describe('JWT Authentication', () => {
         role: 'user',
       } as JwtPayload;
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(UnauthorizedException);
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow('토큰에 필수 정보가 누락되었습니다');
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        '토큰에 필수 정보가 누락되었습니다',
+      );
     });
 
     it('email 필드가 누락되면 에러를 발생시켜야 함', async () => {
@@ -97,7 +105,9 @@ describe('JWT Authentication', () => {
         role: 'user',
       } as JwtPayload;
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('role 필드가 누락되면 에러를 발생시켜야 함', async () => {
@@ -106,7 +116,9 @@ describe('JWT Authentication', () => {
         email: 'test@example.com',
       } as JwtPayload;
 
-      await expect(jwtStrategy.validate(payload)).rejects.toThrow(UnauthorizedException);
+      await expect(jwtStrategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -156,8 +168,12 @@ describe('JWT Authentication', () => {
         type: 'access',
       };
 
-      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow(UnauthorizedException);
-      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow('유효하지 않은 토큰 타입입니다');
+      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow(
+        '유효하지 않은 토큰 타입입니다',
+      );
     });
 
     it('필수 필드가 누락되면 에러를 발생시켜야 함', async () => {
@@ -166,8 +182,12 @@ describe('JWT Authentication', () => {
         email: 'test@example.com',
       } as JwtPayload;
 
-      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow(UnauthorizedException);
-      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow('토큰에 필수 정보가 누락되었습니다');
+      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow(
+        UnauthorizedException,
+      );
+      await expect(jwtRefreshStrategy.validate(payload)).rejects.toThrow(
+        '토큰에 필수 정보가 누락되었습니다',
+      );
     });
   });
 });

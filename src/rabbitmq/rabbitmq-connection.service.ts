@@ -57,7 +57,7 @@ export class RabbitMQConnectionService
     const user = this.configService.get<string>('rabbitmq.user');
     const password = this.configService.get<string>('rabbitmq.password');
     const vhost = this.configService.get<string>('rabbitmq.vhost');
-    
+
     // RabbitMQ URL 생성
     const url = `amqp://${user}:${password}@${host}:${port}${vhost}`;
 

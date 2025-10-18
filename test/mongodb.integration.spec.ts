@@ -102,7 +102,9 @@ describe('MongodbService 통합 테스트 (실제 DB 연동)', () => {
       expect(Array.isArray(allProducts)).toBe(true);
       expect(allProducts.length).toBeGreaterThanOrEqual(1);
 
-      const testProduct = allProducts.find((p) => p.productId === testProductId);
+      const testProduct = allProducts.find(
+        (p) => p.productId === testProductId,
+      );
       expect(testProduct).toBeDefined();
     });
 

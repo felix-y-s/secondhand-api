@@ -134,7 +134,9 @@ export function ApiUpdateResponses(
  *
  * 204 No Content 응답과 공통 에러 응답을 추가합니다
  */
-export function ApiDeleteResponses(successDescription: string = '리소스가 성공적으로 삭제되었습니다') {
+export function ApiDeleteResponses(
+  successDescription: string = '리소스가 성공적으로 삭제되었습니다',
+) {
   return applyDecorators(
     ApiResponse({
       status: 204,

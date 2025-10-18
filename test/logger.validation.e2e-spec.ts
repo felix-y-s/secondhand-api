@@ -36,7 +36,11 @@ describe('Winston Logger Validation (e2e)', () => {
 
     it('오늘 날짜의 combined 로그 파일이 존재해야 함', () => {
       const today = new Date().toISOString().split('T')[0];
-      const combinedLog = path.join(process.cwd(), 'logs', `combined-${today}.log`);
+      const combinedLog = path.join(
+        process.cwd(),
+        'logs',
+        `combined-${today}.log`,
+      );
       expect(fs.existsSync(combinedLog)).toBe(true);
     });
 
@@ -89,10 +93,17 @@ describe('Winston Logger Validation (e2e)', () => {
 
   describe('민감정보 마스킹 검증', () => {
     const today = new Date().toISOString().split('T')[0];
-    const combinedLogPath = path.join(process.cwd(), 'logs', `combined-${today}.log`);
+    const combinedLogPath = path.join(
+      process.cwd(),
+      'logs',
+      `combined-${today}.log`,
+    );
 
     it('비밀번호가 마스킹되어야 함', async () => {
-      logger.log('사용자 등록: {"email":"test@example.com","password":"secret123"}', 'LoggerTest');
+      logger.log(
+        '사용자 등록: {"email":"test@example.com","password":"secret123"}',
+        'LoggerTest',
+      );
 
       // 로그 파일에 기록될 시간 대기
       await new Promise((resolve) => setTimeout(resolve, 100));
@@ -211,14 +222,22 @@ describe('Winston Logger Validation (e2e)', () => {
   describe('에러 핸들링', () => {
     it('예외 처리 로그가 exceptions 파일에 기록되어야 함', () => {
       const today = new Date().toISOString().split('T')[0];
-      const exceptionsLog = path.join(process.cwd(), 'logs', `exceptions-${today}.log`);
+      const exceptionsLog = path.join(
+        process.cwd(),
+        'logs',
+        `exceptions-${today}.log`,
+      );
 
       expect(fs.existsSync(exceptionsLog)).toBe(true);
     });
 
     it('프로미스 거부 로그가 rejections 파일에 기록되어야 함', () => {
       const today = new Date().toISOString().split('T')[0];
-      const rejectionsLog = path.join(process.cwd(), 'logs', `rejections-${today}.log`);
+      const rejectionsLog = path.join(
+        process.cwd(),
+        'logs',
+        `rejections-${today}.log`,
+      );
 
       expect(fs.existsSync(rejectionsLog)).toBe(true);
     });
@@ -227,7 +246,11 @@ describe('Winston Logger Validation (e2e)', () => {
   describe('로그 파일 크기 및 보관 기간', () => {
     it('로그 파일이 설정된 최대 크기를 초과하지 않아야 함', () => {
       const today = new Date().toISOString().split('T')[0];
-      const combinedLog = path.join(process.cwd(), 'logs', `combined-${today}.log`);
+      const combinedLog = path.join(
+        process.cwd(),
+        'logs',
+        `combined-${today}.log`,
+      );
 
       if (fs.existsSync(combinedLog)) {
         const stats = fs.statSync(combinedLog);

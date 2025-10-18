@@ -2,7 +2,11 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '@/prisma/prisma.service';
 import { MongodbService } from '@/database/mongodb/mongodb.service';
 import { RedisService } from '@/database/redis/redis.service';
-import { HealthResponseDto, DetailedHealthResponseDto, ServiceStatus } from './dto/health-response.dto';
+import {
+  HealthResponseDto,
+  DetailedHealthResponseDto,
+  ServiceStatus,
+} from './dto/health-response.dto';
 
 /**
  * 헬스체크 서비스
@@ -53,7 +57,9 @@ export class HealthService {
 
     // 전체 상태 결정: 하나라도 unhealthy면 degraded
     const allHealthy =
-      postgresStatus.status === 'healthy' && mongoStatus.status === 'healthy' && redisStatus.status === 'healthy';
+      postgresStatus.status === 'healthy' &&
+      mongoStatus.status === 'healthy' &&
+      redisStatus.status === 'healthy';
 
     const overallStatus = allHealthy ? 'healthy' : 'degraded';
 
@@ -80,9 +86,13 @@ export class HealthService {
    */
   async readinessCheck(): Promise<HealthResponseDto> {
     try {
-      const [postgresStatus, redisStatus] = await Promise.all([this.checkPostgreSQL(), this.checkRedis()]);
+      const [postgresStatus, redisStatus] = await Promise.all([
+        this.checkPostgreSQL(),
+        this.checkRedis(),
+      ]);
 
-      const isReady = postgresStatus.status === 'healthy' && redisStatus.status === 'healthy';
+      const isReady =
+        postgresStatus.status === 'healthy' && redisStatus.status === 'healthy';
 
       if (!isReady) {
         this.logger.warn('Readiness check failed', {

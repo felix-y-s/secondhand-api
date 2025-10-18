@@ -349,13 +349,7 @@ describe('RedisService 통합 테스트 (실제 Redis 연동)', () => {
       const categoryKey = `${TEST_PREFIX}product:888:categories`;
 
       // 카테고리 추가
-      await service.sadd(
-        categoryKey,
-        '전자기기',
-        '스마트폰',
-        'Apple',
-        '중고',
-      );
+      await service.sadd(categoryKey, '전자기기', '스마트폰', 'Apple', '중고');
 
       // 중복 추가 시도
       await service.sadd(categoryKey, '스마트폰'); // 이미 존재

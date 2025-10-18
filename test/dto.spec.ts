@@ -138,7 +138,12 @@ describe('Common DTO Validation', () => {
         { id: 2, name: 'Item 2' },
       ];
 
-      const response = CursorPaginatedResponseDto.create(data, '123', true, '조회 성공');
+      const response = CursorPaginatedResponseDto.create(
+        data,
+        '123',
+        true,
+        '조회 성공',
+      );
 
       expect(response.success).toBe(true);
       expect(response.data).toEqual(data);
@@ -216,7 +221,9 @@ describe('Common DTO Validation', () => {
 
   describe('StringIdParamDto', () => {
     it('유효한 문자열 ID를 허용해야 함', async () => {
-      const dto = plainToClass(StringIdParamDto, { id: '507f1f77bcf86cd799439011' });
+      const dto = plainToClass(StringIdParamDto, {
+        id: '507f1f77bcf86cd799439011',
+      });
       const errors = await validate(dto);
       expect(errors.length).toBe(0);
     });

@@ -24,10 +24,14 @@ import { JwtValidationResult } from '../interfaces/jwt-payload.interface';
  * }
  * ```
  */
-export const CurrentUser = createParamDecorator((data: keyof JwtValidationResult | undefined, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest();
-  const user = request.user as JwtValidationResult;
+export const CurrentUser = createParamDecorator(
+  (data: keyof JwtValidationResult | undefined, ctx: ExecutionContext) => {
+    const request = ctx
+      .switchToHttp()
+      .getRequest<{ user: JwtValidationResult }>();
+    const user = request.user;
 
-  // 특정 필드만 반환
-  return data ? user?.[data] : user;
-});
+    // 특정 필드만 반환
+    return data ? user?.[data] : user;
+  },
+);

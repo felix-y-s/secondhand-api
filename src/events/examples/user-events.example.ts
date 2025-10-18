@@ -114,10 +114,7 @@ export class UserEventsExample {
    * - 중요한 알림 (예: VIP 회원 가입)
    * - 긴급 처리가 필요한 작업
    */
-  async publishVipUserRegistered(
-    userId: number,
-    email: string,
-  ): Promise<void> {
+  async publishVipUserRegistered(userId: number, email: string): Promise<void> {
     const event: UserRegisteredEvent = {
       eventId: uuidv4(),
       eventType: EventType.USER_REGISTERED,
@@ -191,10 +188,7 @@ export class UserEventsExample {
    * 사용 시나리오:
    * - 이벤트 발행 실패 시 재시도 또는 로깅
    */
-  async publishWithErrorHandling(
-    userId: number,
-    email: string,
-  ): Promise<void> {
+  async publishWithErrorHandling(userId: number, email: string): Promise<void> {
     try {
       const event: UserRegisteredEvent = {
         eventId: uuidv4(),

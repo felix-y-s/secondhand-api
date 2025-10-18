@@ -2,7 +2,10 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload, JwtValidationResult } from '../interfaces/jwt-payload.interface';
+import {
+  JwtPayload,
+  JwtValidationResult,
+} from '../interfaces/jwt-payload.interface';
 
 /**
  * JWT 인증 전략

@@ -94,7 +94,9 @@ describe('HealthController', () => {
     });
 
     it('PostgreSQL이 실패하면 degraded를 반환해야 함', async () => {
-      mockPrismaService.$queryRaw.mockRejectedValue(new Error('Connection refused'));
+      mockPrismaService.$queryRaw.mockRejectedValue(
+        new Error('Connection refused'),
+      );
       mockMongodbService.isConnected.mockResolvedValue(true);
       mockRedisService.ping.mockResolvedValue('PONG');
 
@@ -161,7 +163,9 @@ describe('HealthController', () => {
     });
 
     it('PostgreSQL이 실패하면 not_ready를 반환해야 함', async () => {
-      mockPrismaService.$queryRaw.mockRejectedValue(new Error('Connection refused'));
+      mockPrismaService.$queryRaw.mockRejectedValue(
+        new Error('Connection refused'),
+      );
       mockRedisService.ping.mockResolvedValue('PONG');
 
       const result = await controller.ready();

@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
 /**
@@ -8,7 +13,10 @@ import { PrismaClient } from '@prisma/client';
  * - 데이터베이스 연결 풀 관리
  */
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService
+  extends PrismaClient
+  implements OnModuleInit, OnModuleDestroy
+{
   private readonly logger = new Logger(PrismaService.name);
 
   constructor() {
@@ -96,7 +104,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * 트랜잭션 헬퍼
    */
   async executeTransaction<T>(
-    operations: (prisma: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'>) => Promise<T>,
+    operations: (
+      prisma: Omit<
+        PrismaClient,
+        '$connect' | '$disconnect' | '$on' | '$transaction' | '$use'
+      >,
+    ) => Promise<T>,
   ): Promise<T> {
     return this.$transaction(operations);
   }

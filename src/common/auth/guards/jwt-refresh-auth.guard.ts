@@ -1,4 +1,8 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Observable } from 'rxjs';
 
@@ -15,7 +19,9 @@ export class JwtRefreshAuthGuard extends AuthGuard('jwt-refresh') {
    * @param context - 실행 컨텍스트
    * @returns 인증 결과
    */
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
     return super.canActivate(context);
   }
 
@@ -28,7 +34,9 @@ export class JwtRefreshAuthGuard extends AuthGuard('jwt-refresh') {
   handleRequest(err: any, user: any, info: any) {
     // 에러가 발생했거나 사용자 정보가 없는 경우
     if (err || !user) {
-      throw err || new UnauthorizedException('Refresh Token이 유효하지 않습니다');
+      throw (
+        err || new UnauthorizedException('Refresh Token이 유효하지 않습니다')
+      );
     }
     return user;
   }

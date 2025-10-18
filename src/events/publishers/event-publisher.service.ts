@@ -201,7 +201,7 @@ export class EventPublisherService {
     );
 
     // 지수 백오프 (1초, 2초, 4초, ...)
-    const delay = Math.pow(2, (options.maxRetries || 0)) * 1000;
+    const delay = Math.pow(2, options.maxRetries || 0) * 1000;
     await this.sleep(delay);
 
     await this.emitDistributed(event, options);

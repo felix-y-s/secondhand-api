@@ -62,7 +62,9 @@ describe('RolesGuard', () => {
       mockRequest.user = null;
 
       expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(mockContext)).toThrow('사용자 인증 정보를 찾을 수 없습니다');
+      expect(() => guard.canActivate(mockContext)).toThrow(
+        '사용자 인증 정보를 찾을 수 없습니다',
+      );
     });
 
     it('사용자 역할 정보가 없으면 ForbiddenException을 발생시켜야 함', () => {
@@ -74,7 +76,9 @@ describe('RolesGuard', () => {
       } as JwtValidationResult;
 
       expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(mockContext)).toThrow('사용자 역할 정보를 찾을 수 없습니다');
+      expect(() => guard.canActivate(mockContext)).toThrow(
+        '사용자 역할 정보를 찾을 수 없습니다',
+      );
     });
 
     it('사용자 역할이 요구 역할과 일치하면 접근을 허용해야 함', () => {
@@ -91,7 +95,9 @@ describe('RolesGuard', () => {
     });
 
     it('다중 역할 중 하나라도 일치하면 접근을 허용해야 함', () => {
-      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN, Role.SELLER]);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue([Role.ADMIN, Role.SELLER]);
       mockRequest.user = {
         userId: 'user-123',
         email: 'seller@example.com',
@@ -112,7 +118,9 @@ describe('RolesGuard', () => {
       } as JwtValidationResult;
 
       expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
-      expect(() => guard.canActivate(mockContext)).toThrow('이 작업을 수행할 권한이 없습니다');
+      expect(() => guard.canActivate(mockContext)).toThrow(
+        '이 작업을 수행할 권한이 없습니다',
+      );
     });
 
     it('ADMIN 역할만 접근 가능한 엔드포인트 테스트', () => {
@@ -136,7 +144,9 @@ describe('RolesGuard', () => {
     });
 
     it('SELLER와 ADMIN만 접근 가능한 엔드포인트 테스트', () => {
-      jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([Role.ADMIN, Role.SELLER]);
+      jest
+        .spyOn(reflector, 'getAllAndOverride')
+        .mockReturnValue([Role.ADMIN, Role.SELLER]);
 
       // USER 역할 - 거부
       mockRequest.user = {

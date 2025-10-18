@@ -22,10 +22,18 @@ export class PaginationMetaDto {
   @ApiProperty({ description: '이전 페이지 존재 여부', example: false })
   hasPreviousPage: boolean;
 
-  @ApiPropertyOptional({ description: '다음 페이지 번호', example: 2, nullable: true })
+  @ApiPropertyOptional({
+    description: '다음 페이지 번호',
+    example: 2,
+    nullable: true,
+  })
   nextPage: number | null;
 
-  @ApiPropertyOptional({ description: '이전 페이지 번호', example: null, nullable: true })
+  @ApiPropertyOptional({
+    description: '이전 페이지 번호',
+    example: null,
+    nullable: true,
+  })
   previousPage: number | null;
 }
 
@@ -38,7 +46,10 @@ export class ResponseDto<T> {
   @ApiProperty({ description: '성공 여부', example: true })
   success: boolean;
 
-  @ApiPropertyOptional({ description: '응답 메시지', example: '요청이 성공적으로 처리되었습니다' })
+  @ApiPropertyOptional({
+    description: '응답 메시지',
+    example: '요청이 성공적으로 처리되었습니다',
+  })
   message?: string;
 
   @ApiPropertyOptional({ description: '응답 데이터' })
@@ -51,7 +62,10 @@ export class ResponseDto<T> {
     details?: any;
   };
 
-  @ApiPropertyOptional({ description: '타임스탬프', example: '2025-10-17T10:30:00Z' })
+  @ApiPropertyOptional({
+    description: '타임스탬프',
+    example: '2025-10-17T10:30:00Z',
+  })
   timestamp?: string;
 
   constructor(success: boolean, data?: T, message?: string, error?: any) {
@@ -72,7 +86,10 @@ export class ResponseDto<T> {
   /**
    * 실패 응답 생성
    */
-  static error<T = any>(error: { code: string; message: string; details?: any }, message?: string): ResponseDto<T> {
+  static error<T = any>(
+    error: { code: string; message: string; details?: any },
+    message?: string,
+  ): ResponseDto<T> {
     return new ResponseDto(false, undefined as T, message, error);
   }
 }
@@ -92,7 +109,11 @@ export class PaginatedResponseDto<T> extends ResponseDto<T[]> {
   /**
    * 페이지네이션 응답 생성
    */
-  static create<T>(data: T[], meta: PaginationMetaDto, message?: string): PaginatedResponseDto<T> {
+  static create<T>(
+    data: T[],
+    meta: PaginationMetaDto,
+    message?: string,
+  ): PaginatedResponseDto<T> {
     return new PaginatedResponseDto(data, meta, message);
   }
 }
@@ -101,13 +122,22 @@ export class PaginatedResponseDto<T> extends ResponseDto<T[]> {
  * 커서 기반 페이지네이션 응답 포맷
  */
 export class CursorPaginatedResponseDto<T> extends ResponseDto<T[]> {
-  @ApiPropertyOptional({ description: '다음 커서', example: '123', nullable: true })
+  @ApiPropertyOptional({
+    description: '다음 커서',
+    example: '123',
+    nullable: true,
+  })
   nextCursor: string | number | null;
 
   @ApiProperty({ description: '다음 페이지 존재 여부', example: true })
   hasNextPage: boolean;
 
-  constructor(data: T[], nextCursor: string | number | null, hasNextPage: boolean, message?: string) {
+  constructor(
+    data: T[],
+    nextCursor: string | number | null,
+    hasNextPage: boolean,
+    message?: string,
+  ) {
     super(true, data, message);
     this.nextCursor = nextCursor;
     this.hasNextPage = hasNextPage;
@@ -122,7 +152,12 @@ export class CursorPaginatedResponseDto<T> extends ResponseDto<T[]> {
     hasNextPage: boolean,
     message?: string,
   ): CursorPaginatedResponseDto<T> {
-    return new CursorPaginatedResponseDto(data, nextCursor, hasNextPage, message);
+    return new CursorPaginatedResponseDto(
+      data,
+      nextCursor,
+      hasNextPage,
+      message,
+    );
   }
 }
 
@@ -132,7 +167,10 @@ export class CursorPaginatedResponseDto<T> extends ResponseDto<T[]> {
  * 생성/수정 작업 후 ID만 반환할 때 사용
  */
 export class IdResponseDto {
-  @ApiProperty({ description: '생성/수정된 항목의 ID', example: '123e4567-e89b-12d3-a456-426614174000' })
+  @ApiProperty({
+    description: '생성/수정된 항목의 ID',
+    example: '123e4567-e89b-12d3-a456-426614174000',
+  })
   id: string | number;
 
   constructor(id: string | number) {
@@ -149,7 +187,10 @@ export class SuccessResponseDto {
   @ApiProperty({ description: '성공 여부', example: true })
   success: boolean = true;
 
-  @ApiPropertyOptional({ description: '응답 메시지', example: '작업이 성공적으로 완료되었습니다' })
+  @ApiPropertyOptional({
+    description: '응답 메시지',
+    example: '작업이 성공적으로 완료되었습니다',
+  })
   message?: string;
 
   constructor(message?: string) {

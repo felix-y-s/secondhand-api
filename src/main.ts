@@ -16,7 +16,9 @@ async function bootstrap() {
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
   // HTTP 요청 로깅 인터셉터 등록
-  app.useGlobalInterceptors(new LoggingInterceptor(app.get(WINSTON_MODULE_NEST_PROVIDER)));
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(app.get(WINSTON_MODULE_NEST_PROVIDER)),
+  );
 
   // ==================== 보안 미들웨어 설정 ====================
 
@@ -54,7 +56,10 @@ async function bootstrap() {
    * - maxAge: Preflight 요청 캐시 시간 (초)
    */
   app.enableCors({
-    origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000', 'http://localhost:3001'],
+    origin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -137,7 +142,11 @@ async function bootstrap() {
         '**Base URL**: /api/v1',
     )
     .setVersion('1.0')
-    .setContact('Backend Team', 'https://github.com/yourusername/secondhand-api', 'backend@example.com')
+    .setContact(
+      'Backend Team',
+      'https://github.com/yourusername/secondhand-api',
+      'backend@example.com',
+    )
     .setLicense('MIT', 'https://opensource.org/licenses/MIT')
     .addServer(process.env.API_URL || 'http://localhost:3000', '개발 서버')
     .addServer('https://staging.api.example.com', '스테이징 서버')
@@ -185,7 +194,11 @@ async function bootstrap() {
 
   await app.listen(process.env.PORT ?? 3000);
 
-  console.log(`Application is running on: http://localhost:${process.env.PORT ?? 3000}`);
-  console.log(`Swagger API Docs: http://localhost:${process.env.PORT ?? 3000}/api-docs`);
+  console.log(
+    `Application is running on: http://localhost:${process.env.PORT ?? 3000}`,
+  );
+  console.log(
+    `Swagger API Docs: http://localhost:${process.env.PORT ?? 3000}/api-docs`,
+  );
 }
 bootstrap();

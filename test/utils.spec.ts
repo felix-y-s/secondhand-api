@@ -100,7 +100,10 @@ describe('Utility Functions', () => {
         const isValid = await CryptoUtil.comparePassword(password, hash);
         expect(isValid).toBe(true);
 
-        const isInvalid = await CryptoUtil.comparePassword('wrongPassword', hash);
+        const isInvalid = await CryptoUtil.comparePassword(
+          'wrongPassword',
+          hash,
+        );
         expect(isInvalid).toBe(false);
       });
 
@@ -154,7 +157,9 @@ describe('Utility Functions', () => {
 
         expect(hash).toBeDefined();
         expect(hash.length).toBe(64); // SHA-256은 32바이트 = 64 hex 문자
-        expect(hash).toBe('b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9');
+        expect(hash).toBe(
+          'b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9',
+        );
       });
 
       it('같은 입력은 항상 같은 해시를 생성해야 함', () => {
@@ -244,7 +249,10 @@ describe('Utility Functions', () => {
     describe('paginate', () => {
       it('페이지네이션 결과를 생성해야 함', () => {
         const data = Array.from({ length: 10 }, (_, i) => ({ id: i + 1 }));
-        const result = PaginationUtil.paginate(data, 100, { page: 2, limit: 10 });
+        const result = PaginationUtil.paginate(data, 100, {
+          page: 2,
+          limit: 10,
+        });
 
         expect(result.data).toHaveLength(10);
         expect(result.meta.total).toBe(100);
@@ -259,7 +267,10 @@ describe('Utility Functions', () => {
 
       it('첫 페이지는 이전 페이지가 없어야 함', () => {
         const data = Array.from({ length: 10 }, (_, i) => ({ id: i + 1 }));
-        const result = PaginationUtil.paginate(data, 100, { page: 1, limit: 10 });
+        const result = PaginationUtil.paginate(data, 100, {
+          page: 1,
+          limit: 10,
+        });
 
         expect(result.meta.hasPreviousPage).toBe(false);
         expect(result.meta.previousPage).toBeNull();
@@ -267,7 +278,10 @@ describe('Utility Functions', () => {
 
       it('마지막 페이지는 다음 페이지가 없어야 함', () => {
         const data = Array.from({ length: 10 }, (_, i) => ({ id: i + 1 }));
-        const result = PaginationUtil.paginate(data, 100, { page: 10, limit: 10 });
+        const result = PaginationUtil.paginate(data, 100, {
+          page: 10,
+          limit: 10,
+        });
 
         expect(result.meta.hasNextPage).toBe(false);
         expect(result.meta.nextPage).toBeNull();
@@ -327,7 +341,11 @@ describe('Utility Functions', () => {
         // limit + 1 개 조회 (다음 페이지 존재 확인용)
         const data = Array.from({ length: 11 }, (_, i) => ({ id: i + 1 }));
 
-        const result = PaginationUtil.cursorPaginate(data, { limit: 10 }, (item) => item.id);
+        const result = PaginationUtil.cursorPaginate(
+          data,
+          { limit: 10 },
+          (item) => item.id,
+        );
 
         expect(result.data).toHaveLength(10);
         expect(result.nextCursor).toBe(10);
@@ -337,7 +355,11 @@ describe('Utility Functions', () => {
       it('마지막 페이지는 다음 커서가 없어야 함', () => {
         const data = Array.from({ length: 5 }, (_, i) => ({ id: i + 1 }));
 
-        const result = PaginationUtil.cursorPaginate(data, { limit: 10 }, (item) => item.id);
+        const result = PaginationUtil.cursorPaginate(
+          data,
+          { limit: 10 },
+          (item) => item.id,
+        );
 
         expect(result.data).toHaveLength(5);
         expect(result.nextCursor).toBeNull();

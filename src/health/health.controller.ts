@@ -3,7 +3,10 @@ import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SkipThrottle, ApiPublicResponses } from '@/common/decorators';
 import { Public } from '@/common/auth';
 import { HealthService } from './health.service';
-import { HealthResponseDto, DetailedHealthResponseDto } from './dto/health-response.dto';
+import {
+  HealthResponseDto,
+  DetailedHealthResponseDto,
+} from './dto/health-response.dto';
 
 /**
  * 헬스체크 컨트롤러
@@ -23,7 +26,8 @@ export class HealthController {
    */
   @ApiOperation({
     summary: '기본 헬스체크',
-    description: '서버 실행 여부를 확인합니다. Rate Limiting이 적용되지 않습니다.',
+    description:
+      '서버 실행 여부를 확인합니다. Rate Limiting이 적용되지 않습니다.',
   })
   @ApiPublicResponses(200, HealthResponseDto, '서버 정상 동작 중')
   @Public()
@@ -43,7 +47,11 @@ export class HealthController {
     summary: '상세 헬스체크',
     description: 'PostgreSQL, MongoDB, Redis 연결 상태를 포함한 상세 헬스체크',
   })
-  @ApiPublicResponses(200, DetailedHealthResponseDto, '서버 및 데이터베이스 상태 정상')
+  @ApiPublicResponses(
+    200,
+    DetailedHealthResponseDto,
+    '서버 및 데이터베이스 상태 정상',
+  )
   @Public()
   @SkipThrottle()
   @Get('detailed')
@@ -59,7 +67,8 @@ export class HealthController {
    */
   @ApiOperation({
     summary: 'Readiness Probe',
-    description: '서버가 트래픽을 받을 준비가 되었는지 확인합니다 (Kubernetes용)',
+    description:
+      '서버가 트래픽을 받을 준비가 되었는지 확인합니다 (Kubernetes용)',
   })
   @ApiPublicResponses(200, HealthResponseDto, '트래픽 수신 준비 완료')
   @Public()

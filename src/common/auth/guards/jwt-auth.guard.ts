@@ -1,4 +1,8 @@
-import { Injectable, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Reflector } from '@nestjs/core';
 import { Observable } from 'rxjs';
@@ -21,7 +25,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @param context - 실행 컨텍스트
    * @returns 인증 결과
    */
-  canActivate(context: ExecutionContext): boolean | Promise<boolean> | Observable<boolean> {
+  canActivate(
+    context: ExecutionContext,
+  ): boolean | Promise<boolean> | Observable<boolean> {
     // @Public() 데코레이터 확인
     const isPublic = this.reflector.getAllAndOverride<boolean>('isPublic', [
       context.getHandler(),
@@ -43,7 +49,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
    * @param err - 발생한 에러
    * @param user - 사용자 정보
    */
-  handleRequest(err: any, user: any, info: any) {
+  handleRequest(err: Error | null, user: JwtValidationResult | null) {
     // 에러가 발생했거나 사용자 정보가 없는 경우
     if (err || !user) {
       throw err || new UnauthorizedException('인증에 실패했습니다');

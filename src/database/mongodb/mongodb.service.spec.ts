@@ -19,7 +19,7 @@ describe('MongodbService', () => {
       location: {
         city: '서울',
         district: '강남구',
-        coordinates: [37.5665, 126.9780],
+        coordinates: [37.5665, 126.978],
       },
     },
     save: jest.fn().mockResolvedValue(this),
@@ -256,9 +256,7 @@ describe('MongodbService', () => {
     describe('deleteConversation', () => {
       it('대화방의 모든 메시지를 삭제해야 함', async () => {
         const conversationId = 'conv-123';
-        const execMock = jest
-          .fn()
-          .mockResolvedValue({ deletedCount: 5 });
+        const execMock = jest.fn().mockResolvedValue({ deletedCount: 5 });
 
         mockMessageModel.deleteMany.mockReturnValue({ exec: execMock });
 

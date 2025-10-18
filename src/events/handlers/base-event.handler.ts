@@ -104,11 +104,7 @@ export abstract class BaseEventHandler<T extends BaseEvent> {
   /**
    * 에러 로깅
    */
-  protected logError(
-    event: T,
-    error: Error,
-    logger: LoggerService,
-  ): void {
+  protected logError(event: T, error: Error, logger: LoggerService): void {
     logger.error(
       `❌ 이벤트 처리 실패: ${event.eventType} | ID: ${event.eventId} | 오류: ${error.message}`,
       error.stack,
@@ -119,10 +115,7 @@ export abstract class BaseEventHandler<T extends BaseEvent> {
   /**
    * 최대 재시도 횟수 초과 로깅
    */
-  protected logMaxRetriesExceeded(
-    event: T,
-    logger: LoggerService,
-  ): void {
+  protected logMaxRetriesExceeded(event: T, logger: LoggerService): void {
     logger.error(
       `🚨 최대 재시도 횟수 초과: ${event.eventType} | ID: ${event.eventId}`,
       this.handlerName,

@@ -2,7 +2,10 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload, JwtValidationResult } from '../interfaces/jwt-payload.interface';
+import {
+  JwtPayload,
+  JwtValidationResult,
+} from '../interfaces/jwt-payload.interface';
 
 /**
  * JWT Refresh Token 인증 전략
@@ -10,7 +13,10 @@ import { JwtPayload, JwtValidationResult } from '../interfaces/jwt-payload.inter
  * Refresh Token을 검증하고 새로운 Access Token 발급을 위한 사용자 정보를 추출합니다.
  */
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh') {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(private readonly configService: ConfigService) {
     super({
       // Authorization 헤더에서 Bearer 토큰 추출
@@ -18,7 +24,9 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
       // 만료된 토큰 거부
       ignoreExpiration: false,
       // JWT Refresh 시크릿 키 (Access Token과 다른 키 사용 권장)
-      secretOrKey: configService.get<string>('JWT_REFRESH_SECRET') || 'your-refresh-secret-key',
+      secretOrKey:
+        configService.get<string>('JWT_REFRESH_SECRET') ||
+        'your-refresh-secret-key',
     });
   }
 

@@ -10,7 +10,9 @@ export default () => ({
     port: parseInt(process.env.PORT || '3000', 10),
     apiPrefix: process.env.API_PREFIX || 'api',
     apiVersion: process.env.API_VERSION || 'v1',
-    corsOrigin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+    corsOrigin: process.env.CORS_ORIGIN?.split(',') || [
+      'http://localhost:3000',
+    ],
   },
 
   // 데이터베이스 설정
@@ -40,14 +42,18 @@ export default () => ({
     user: process.env.RABBITMQ_USER || 'admin',
     password: process.env.RABBITMQ_PASSWORD || 'admin123',
     vhost: process.env.RABBITMQ_VHOST || '/',
-    managementPort: parseInt(process.env.RABBITMQ_MANAGEMENT_PORT || '15674', 10),
+    managementPort: parseInt(
+      process.env.RABBITMQ_MANAGEMENT_PORT || '15674',
+      10,
+    ),
   },
 
   // JWT 인증 설정
   jwt: {
     secret: process.env.JWT_SECRET || 'dev-super-secret-jwt-key',
     expiresIn: process.env.JWT_EXPIRES_IN || '1h',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'dev-super-secret-refresh-key',
+    refreshSecret:
+      process.env.JWT_REFRESH_SECRET || 'dev-super-secret-refresh-key',
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
   },
 

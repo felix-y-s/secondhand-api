@@ -48,7 +48,7 @@ import { winstonConfig } from './config/logger.config';
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => [
+      useFactory: () => [
         {
           name: 'short', // 짧은 시간 제한 (예: 로그인, 민감한 API)
           ttl: 60000, // 1분 (밀리초)

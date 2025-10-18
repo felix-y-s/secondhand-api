@@ -63,8 +63,9 @@ describe('RabbitMQ/Events 통합 테스트 (실제 RabbitMQ 연동)', () => {
     rabbitMQService = moduleRef.get<RabbitMQConnectionService>(
       RabbitMQConnectionService,
     );
-    eventPublisher =
-      moduleRef.get<EventPublisherService>(EventPublisherService);
+    eventPublisher = moduleRef.get<EventPublisherService>(
+      EventPublisherService,
+    );
     eventEmitter = moduleRef.get<EventEmitter2>(EventEmitter2);
 
     // RabbitMQ 초기화 (onModuleInit 호출)

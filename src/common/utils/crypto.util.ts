@@ -1,5 +1,10 @@
 import * as bcrypt from 'bcrypt';
-import { createCipheriv, createDecipheriv, randomBytes, createHash } from 'crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  createHash,
+} from 'crypto';
 
 /**
  * 암호화 유틸리티 클래스
@@ -27,7 +32,10 @@ export class CryptoUtil {
    * const hash = await CryptoUtil.hashPassword('myPassword123');
    * // $2b$10$...
    */
-  static async hashPassword(password: string, saltRounds: number = this.SALT_ROUNDS): Promise<string> {
+  static async hashPassword(
+    password: string,
+    saltRounds: number = this.SALT_ROUNDS,
+  ): Promise<string> {
     return bcrypt.hash(password, saltRounds);
   }
 
@@ -42,7 +50,10 @@ export class CryptoUtil {
    * const isValid = await CryptoUtil.comparePassword('myPassword123', hash);
    * // true or false
    */
-  static async comparePassword(password: string, hash: string): Promise<boolean> {
+  static async comparePassword(
+    password: string,
+    hash: string,
+  ): Promise<boolean> {
     return bcrypt.compare(password, hash);
   }
 
@@ -205,7 +216,9 @@ export class CryptoUtil {
    * const hmac = CryptoUtil.generateHMAC('message', 'secret');
    */
   static generateHMAC(message: string, secret: string): string {
-    const hmac = createHash('sha256').update(secret + message).digest('hex');
+    const hmac = createHash('sha256')
+      .update(secret + message)
+      .digest('hex');
     return hmac;
   }
 

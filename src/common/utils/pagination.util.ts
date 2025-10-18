@@ -92,7 +92,11 @@ export class PaginationUtil {
    * //   meta: { total: 100, page: 2, limit: 10, ... }
    * // }
    */
-  static paginate<T>(data: T[], total: number, options: PaginationOptions): PaginatedResult<T> {
+  static paginate<T>(
+    data: T[],
+    total: number,
+    options: PaginationOptions,
+  ): PaginatedResult<T> {
     const { page, limit } = options;
     const totalPages = Math.ceil(total / limit);
 
@@ -237,7 +241,10 @@ export class PaginationUtil {
     const paginatedData = hasNextPage ? data.slice(0, limit) : data;
 
     // 다음 커서는 마지막 항목의 커서값
-    const nextCursor = hasNextPage && paginatedData.length > 0 ? getCursor(paginatedData[paginatedData.length - 1]) : null;
+    const nextCursor =
+      hasNextPage && paginatedData.length > 0
+        ? getCursor(paginatedData[paginatedData.length - 1])
+        : null;
 
     return {
       data: paginatedData,
@@ -321,7 +328,11 @@ export class PaginationUtil {
    * const pageRange = PaginationUtil.getPageRange(5, 10, 2);
    * // [1, '...', 3, 4, 5, 6, 7, '...', 10]
    */
-  static getPageRange(currentPage: number, totalPages: number, delta: number = 2): (number | string)[] {
+  static getPageRange(
+    currentPage: number,
+    totalPages: number,
+    delta: number = 2,
+  ): (number | string)[] {
     const range: (number | string)[] = [];
     const left = Math.max(2, currentPage - delta);
     const right = Math.min(totalPages - 1, currentPage + delta);
