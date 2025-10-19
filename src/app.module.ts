@@ -17,6 +17,7 @@ import configuration from './config/configuration';
 import { validationSchema } from './config/validation.schema';
 import { winstonConfig } from './config/logger.config';
 import { UsersModule } from './modules/users/users.module';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -48,6 +49,8 @@ import { UsersModule } from './modules/users/users.module';
     HealthModule,
     // Users 모듈 (사용자 관리)
     UsersModule,
+    // Products 모듈 (상품 관리)
+    ProductsModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],

@@ -2,37 +2,32 @@ import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { UsersService } from './users.service';
-import { UsersController } from './users.controller';
+import { ProductsService } from './products.service';
+import { ProductsController } from './products.controller';
+import { ProductsRepository } from './repositories/products.repository';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { UsersRepository } from './repositories/users.repository';
 import { JwtStrategy } from '@/common/auth/strategies/jwt.strategy';
 
 /**
- * 사용자 관리 모듈
+ * 상품 모듈
  */
 @Module({
   imports: [
     PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    // JWT 모듈 설정
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
         signOptions: {
-          expiresIn: '15m', // Access Token 유효기간
+          expiresIn: '15m',
         },
       }),
     }),
   ],
-  controllers: [UsersController],
-  providers: [
-    UsersService,
-    UsersRepository,
-    JwtStrategy,
-  ],
-  exports: [UsersService], // 다른 모듈에서 UsersService 사용 가능
+  controllers: [ProductsController],
+  providers: [ProductsService, ProductsRepository, JwtStrategy],
+  exports: [ProductsService, ProductsRepository],
 })
-export class UsersModule {}
+export class ProductsModule {}
