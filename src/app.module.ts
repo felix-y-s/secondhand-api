@@ -19,6 +19,7 @@ import { winstonConfig } from './config/logger.config';
 import { UsersModule } from './modules/users/users.module';
 import { ProductsModule } from './modules/products/products.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { OrdersModule } from './modules/orders/orders.module';
 
 @Module({
   imports: [
@@ -54,6 +55,8 @@ import { CategoriesModule } from './modules/categories/categories.module';
     ProductsModule,
     // Categories 모듈 (카테고리 관리)
     CategoriesModule,
+    // Orders 모듈 (주문 관리)
+    OrdersModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],

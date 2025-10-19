@@ -54,7 +54,7 @@ export class CategoriesService {
       ...rest,
     });
 
-    return new CategoryResponseDto(category);
+    return new CategoryResponseDto(category as any);
   }
 
   /**
@@ -67,7 +67,7 @@ export class CategoriesService {
       throw new NotFoundException('카테고리를 찾을 수 없습니다');
     }
 
-    return new CategoryResponseDto(category);
+    return new CategoryResponseDto(category as any);
   }
 
   /**
@@ -80,7 +80,7 @@ export class CategoriesService {
       throw new NotFoundException('카테고리를 찾을 수 없습니다');
     }
 
-    return new CategoryResponseDto(category);
+    return new CategoryResponseDto(category as any);
   }
 
   /**
@@ -91,7 +91,7 @@ export class CategoriesService {
     includeChildren?: boolean;
   }): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesRepository.findAll(params);
-    return categories.map((category) => new CategoryResponseDto(category));
+    return categories.map((category) => new CategoryResponseDto(category as any));
   }
 
   /**
@@ -99,7 +99,7 @@ export class CategoriesService {
    */
   async findRootCategories(isActive?: boolean): Promise<CategoryResponseDto[]> {
     const categories = await this.categoriesRepository.findRootCategories(isActive);
-    return categories.map((category) => new CategoryResponseDto(category));
+    return categories.map((category) => new CategoryResponseDto(category as any));
   }
 
   /**
@@ -113,7 +113,7 @@ export class CategoriesService {
     }
 
     const children = await this.categoriesRepository.findChildren(parentId, isActive);
-    return children.map((child) => new CategoryResponseDto(child));
+    return children.map((child) => new CategoryResponseDto(child as any));
   }
 
   /**
@@ -193,7 +193,7 @@ export class CategoriesService {
     }
 
     const category = await this.categoriesRepository.update(id, updateData);
-    return new CategoryResponseDto(category);
+    return new CategoryResponseDto(category as any);
   }
 
   /**
@@ -231,7 +231,7 @@ export class CategoriesService {
     }
 
     const updated = await this.categoriesRepository.updateOrder(id, order);
-    return new CategoryResponseDto(updated);
+    return new CategoryResponseDto(updated as any);
   }
 
   /**

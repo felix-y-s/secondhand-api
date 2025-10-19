@@ -58,7 +58,7 @@ export class CategoryResponseDto {
     example: 'https://cdn.example.com/icons/laptops.svg',
   })
   @Expose()
-  icon?: string;
+  icon?: string | null;
 
   @ApiProperty({ description: '표시 순서', example: 0 })
   @Expose()
@@ -70,7 +70,7 @@ export class CategoryResponseDto {
 
   @ApiPropertyOptional({ description: '부모 카테고리 ID' })
   @Expose()
-  parentId?: string;
+  parentId?: string | null;
 
   @ApiPropertyOptional({ description: '부모 카테고리 정보', type: ParentCategoryDto })
   @Expose()
@@ -98,6 +98,10 @@ export class CategoryResponseDto {
   @Expose()
   updatedAt: Date;
 
+  /**
+   * DTO 생성자
+   * Prisma는 optional 필드를 null로 반환하므로 | null 타입 허용
+   */
   constructor(partial: Partial<CategoryResponseDto>) {
     Object.assign(this, partial);
   }
