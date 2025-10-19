@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+generator erd {
+  provider = "prisma-erd-generator"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @default(uuid())
+  email           String           @unique
+  password        String
+  name            String?
+  nickname        String           @unique
+  phoneNumber     String?          @unique
+  profileImage    String?
+  bio             String?
+  role            Role             @default(USER)
+  emailVerified   Boolean          @default(false)
+  phoneVerified   Boolean          @default(false)
+  isActive        Boolean          @default(true)
+  rating          Float            @default(0)
+  ratingCount     Int              @default(0)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  lastLoginAt     DateTime?
+  messages        ChatMessage[]
+  chatRooms       ChatRoomMember[]
+  favorites       Favorite[]
+  notifications   Notification[]
+  orders          Order[]          @relation("buyer")
+  sales           Order[]          @relation("seller")
+  products        Product[]
+  receivedReviews Review[]         @relation("reviewed")
+  reviews         Review[]         @relation("reviewer")
+
+  @@index([email])
+  @@index([role])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Category {
+  id        String     @id @default(uuid())
+  name      String     @unique
+  slug      String     @unique
+  icon      String?
+  order     Int        @default(0)
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  parentId  String?
+  parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryHierarchy")
+  products  Product[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@map("categories")
+}
+
+model Product {
+  id                String           @id @default(uuid())
+  sellerId          String
+  categoryId        String
+  title             String           @db.VarChar(100)
+  description       String
+  price             Int
+  condition         ProductCondition
+  status            ProductStatus    @default(ACTIVE)
+  shippingAvailable Boolean          @default(false)
+  localPickup       Boolean          @default(true)
+  location          String?
+  latitude          Float?
+  longitude         Float?
+  images            String[]         @default([])
+  thumbnail         String?
+  viewCount         Int              @default(0)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  soldAt            DateTime?
+  favorites         Favorite[]
+  orders            Order[]
+  category          Category         @relation(fields: [categoryId], references: [id])
+  seller            User             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([price])
+  @@index([status, createdAt])
+  @@index([categoryId, status])
+  @@index([latitude, longitude])
+  @@map("products")
+}
+
+model Order {
+  id               String         @id @default(uuid())
+  buyerId          String
+  sellerId         String
+  productId        String
+  orderNumber      String         @unique
+  totalAmount      Int
+  shippingFee      Int            @default(0)
+  status           OrderStatus    @default(PENDING)
+  recipientName    String?
+  recipientPhone   String?
+  shippingAddress  String?
+  shippingPostcode String?
+  trackingNumber   String?
+  paymentMethod    PaymentMethod?
+  paymentId        String?        @unique
+  paidAt           DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  confirmedAt      DateTime?
+  completedAt      DateTime?
+  cancelledAt      DateTime?
+  buyer            User           @relation("buyer", fields: [buyerId], references: [id])
+  product          Product        @relation(fields: [productId], references: [id])
+  seller           User           @relation("seller", fields: [sellerId], references: [id])
+  review           Review?
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([productId])
+  @@index([status])
+  @@map("orders")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  orderId    String   @unique
+  reviewerId String
+  reviewedId String
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  reviewed   User     @relation("reviewed", fields: [reviewedId], references: [id])
+  reviewer   User     @relation("reviewer", fields: [reviewerId], references: [id])
+
+  @@index([reviewerId])
+  @@index([reviewedId])
+  @@map("reviews")
+}
+
+model ChatRoom {
+  id        String           @id @default(uuid())
+  productId String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  messages  ChatMessage[]
+  members   ChatRoomMember[]
+
+  @@map("chat_rooms")
+}
+
+model ChatRoomMember {
+  id         String    @id @default(uuid())
+  chatRoomId String
+  userId     String
+  lastReadAt DateTime?
+  joinedAt   DateTime  @default(now())
+  chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([chatRoomId, userId])
+  @@map("chat_room_members")
+}
+
+model ChatMessage {
+  id          String      @id @default(uuid())
+  chatRoomId  String
+  senderId    String
+  content     String
+  messageType MessageType @default(TEXT)
+  fileUrl     String?
+  fileName    String?
+  isRead      Boolean     @default(false)
+  readAt      DateTime?
+  createdAt   DateTime    @default(now())
+  chatRoom    ChatRoom    @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
+
+  @@index([chatRoomId])
+  @@index([senderId])
+  @@map("chat_messages")
+}
+
+model Favorite {
+  id        String   @id @default(uuid())
+  userId    String
+  productId String
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, productId])
+  @@index([userId])
+  @@index([productId])
+  @@map("favorites")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  type        NotificationType
+  title       String
+  message     String
+  relatedId   String?
+  relatedType String?
+  isRead      Boolean          @default(false)
+  readAt      DateTime?
+  createdAt   DateTime         @default(now())
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([isRead])
+  @@map("notifications")
+}
+
+enum Role {
+  ADMIN
+  USER
+  SELLER
+  BUYER
+  GUEST
+}
+
+enum ProductCondition {
+  NEW
+  LIKE_NEW
+  GOOD
+  FAIR
+  POOR
+}
+
+enum ProductStatus {
+  ACTIVE
+  RESERVED
+  SOLD
+  DELETED
+}
+
+enum OrderStatus {
+  PENDING
+  PAYMENT_PENDING
+  PAID
+  SHIPPING
+  DELIVERED
+  CONFIRMED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  BANK_TRANSFER
+  VIRTUAL_ACCOUNT
+  KAKAOPAY
+  TOSSPAY
+  MEET_IN_PERSON
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  FILE
+  SYSTEM
+}
+
+enum NotificationType {
+  PRODUCT_LIKED
+  NEW_MESSAGE
+  ORDER_CREATED
+  ORDER_CONFIRMED
+  ORDER_CANCELLED
+  PAYMENT_COMPLETED
+  REVIEW_RECEIVED
+  SYSTEM
+}

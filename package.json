@@ -25,7 +25,9 @@
     "docker:prod:down": "docker-compose -f docker/docker-compose.yml down",
     "docker:prod:logs": "docker-compose -f docker/docker-compose.yml logs -f",
     "docker:build": "docker-compose -f docker/docker-compose.yml build",
-    "docker:rebuild": "docker-compose -f docker/docker-compose.yml build --no-cache"
+    "docker:rebuild": "docker-compose -f docker/docker-compose.yml build --no-cache",
+    "db:seed": "ts-node prisma/seed.ts",
+    "db:reset": "prisma migrate reset --skip-seed && npm run db:seed"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -114,5 +116,8 @@
       "^src/(.*)$": "<rootDir>/src/$1",
       "^@/(.*)$": "<rootDir>/src/$1"
     }
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
