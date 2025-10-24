@@ -27,6 +27,7 @@ model User {
   isActive        Boolean          @default(true)
   rating          Float            @default(0)
   ratingCount     Int              @default(0)
+  trustScore      Float            @default(0) // 신뢰도 점수 (0-100)
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   lastLoginAt     DateTime?
@@ -140,8 +141,9 @@ model Review {
   orderId    String   @unique
   reviewerId String
   reviewedId String
-  rating     Int
-  comment    String?
+  rating     Int      @db.SmallInt // 1-5 별점
+  comment    String?  @db.Text
+  images     String[] @default([]) // 리뷰 이미지 URL 배열
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
