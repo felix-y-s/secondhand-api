@@ -73,14 +73,25 @@ export class OrdersService {
    * @returns 주문 정보
    */
   async findOne(id: string, userId: string): Promise<Order> {
-    const order = await this.ordersRepository.findById(id);
-    if (!order) {
-      throw new NotFoundException('주문을 찾을 수 없습니다');
-    }
+    const order = await this.findById(id);
 
     // 구매자 또는 판매자만 조회 가능
     if (order.buyerId !== userId && order.sellerId !== userId) {
       throw new ForbiddenException('주문 정보에 접근할 수 없습니다');
+    }
+
+    return order;
+  }
+
+  /**
+   * id로 주문 조회
+   * @param id 주문 ID
+   * @returns 주문 정보
+   */
+  async findById(id: string): Promise<Order> {
+    const order = await this.ordersRepository.findById(id);
+    if (!order) {
+      throw new NotFoundException('주문을 찾을 수 없습니다');
     }
 
     return order;
