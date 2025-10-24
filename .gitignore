@@ -61,3 +61,4 @@ ssl
 # Serena MCP
 .serena
 logs/
+prisma/schema.prisma.backup
