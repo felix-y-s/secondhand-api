@@ -3,6 +3,8 @@ import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -15,8 +17,31 @@ async function bootstrap() {
   // Winston 로거를 애플리케이션 로거로 설정
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
 
-  // HTTP 요청 로깅 인터셉터 등록
+  // ==================== 전역 에러 처리 및 응답 변환 ====================
+
+  /**
+   * Global Exception Filter: 모든 예외를 일관된 형식으로 변환
+   *
+   * - HttpException: NestJS 표준 예외 처리
+   * - Prisma 에러: P2002 (중복), P2025 (NotFound), P2003 (FK 위반) 등 매핑
+   * - 일반 에러: 500 Internal Server Error로 처리
+   * - 응답 형식: {success: false, statusCode, message, errors?, timestamp, path, method}
+   */
+  app.useGlobalFilters(new HttpExceptionFilter());
+
+  /**
+   * Global Interceptors: HTTP 요청/응답 처리
+   *
+   * 1. TransformInterceptor: 성공 응답을 일관된 형식으로 변환
+   *    - 응답 형식: {success: true, statusCode, data?, timestamp}
+   *    - 이미 변환된 응답(success 필드 존재)은 재변환 방지
+   *
+   * 2. LoggingInterceptor: HTTP 요청/응답 로깅
+   *    - Winston 로거 사용
+   *    - 요청 메서드, URL, 응답 시간, 상태 코드 기록
+   */
   app.useGlobalInterceptors(
+    new TransformInterceptor(),
     new LoggingInterceptor(app.get(WINSTON_MODULE_NEST_PROVIDER)),
   );
 
