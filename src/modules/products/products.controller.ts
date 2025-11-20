@@ -35,7 +35,6 @@ import { Public } from '@/common/auth/decorators/public.decorator';
 import { CurrentUser } from '@/common/auth/decorators/current-user.decorator';
 import type { JwtValidationResult } from '@/common/auth/interfaces/jwt-payload.interface';
 import { ResponseDto } from '@/common/dto/response.dto';
-import { ApiGetResponses } from '@/common/decorators/api-responses.decorator';
 import { ProductStatus } from '@prisma/client';
 
 /**
@@ -52,7 +51,7 @@ export class ProductsController {
    * 상품 등록
    */
   @Post()
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: '상품 등록',
     description: '새로운 상품을 등록합니다.',
@@ -135,7 +134,7 @@ export class ProductsController {
    * 내 상품 목록 조회
    */
   @Get('me')
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: '내 상품 목록 조회',
     description: '현재 로그인한 사용자가 등록한 상품 목록을 조회합니다.',
@@ -195,7 +194,7 @@ export class ProductsController {
    * 상품 정보 수정
    */
   @Patch(':id')
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: '상품 정보 수정',
     description: '본인이 등록한 상품의 정보를 수정합니다.',
@@ -230,7 +229,7 @@ export class ProductsController {
    * 상품 삭제
    */
   @Delete(':id')
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOperation({
     summary: '상품 삭제',
     description: '본인이 등록한 상품을 삭제합니다 (소프트 삭제).',

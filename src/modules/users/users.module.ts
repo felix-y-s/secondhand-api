@@ -7,6 +7,7 @@ import { UsersController } from './users.controller';
 import { PrismaModule } from '@/prisma/prisma.module';
 import { UsersRepository } from './repositories/users.repository';
 import { JwtStrategy } from '@/common/auth/strategies/jwt.strategy';
+import { JwtRefreshStrategy } from '@/common/auth/strategies/jwt-refresh.strategy';
 
 /**
  * 사용자 관리 모듈
@@ -32,6 +33,7 @@ import { JwtStrategy } from '@/common/auth/strategies/jwt.strategy';
     UsersService,
     UsersRepository,
     JwtStrategy,
+    JwtRefreshStrategy,
   ],
   exports: [UsersService], // 다른 모듈에서 UsersService 사용 가능
 })

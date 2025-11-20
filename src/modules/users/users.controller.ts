@@ -149,7 +149,7 @@ export class UsersController {
     summary: '내 정보 조회',
     description: '로그인한 사용자의 정보를 조회합니다',
   })
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOkResponse({
     description: '내 정보 조회 성공',
     type: UserResponseDto,
@@ -175,7 +175,7 @@ export class UsersController {
     summary: '내 정보 수정',
     description: '로그인한 사용자의 정보를 수정합니다',
   })
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOkResponse({
     description: '내 정보 수정 성공',
     type: UserResponseDto,
@@ -206,7 +206,7 @@ export class UsersController {
     summary: '회원 탈퇴',
     description: '로그인한 사용자의 계정을 비활성화합니다',
   })
-  @ApiBearerAuth()
+  @ApiBearerAuth('access-token')
   @ApiOkResponse({
     description: '회원 탈퇴 성공',
   })
