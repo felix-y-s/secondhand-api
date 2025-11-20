@@ -15,13 +15,15 @@ import {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly configService: ConfigService) {
+    const secret = configService.get<string>('JWT_SECRET') || 'your-secret-key';
+
     super({
       // Authorization 헤더에서 Bearer 토큰 추출
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       // 만료된 토큰 거부
       ignoreExpiration: false,
       // JWT 시크릿 키
-      secretOrKey: configService.get<string>('JWT_SECRET') || 'your-secret-key',
+      secretOrKey: secret,
     });
   }
 

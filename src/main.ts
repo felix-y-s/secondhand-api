@@ -5,6 +5,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+import { BlockWebSocketMiddleware } from './common/middleware';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -112,6 +113,16 @@ async function bootstrap() {
       threshold: 1024, // 1KB 이상만 압축
     }),
   );
+
+  /**
+   * WebSocket 경로 차단: 구성되지 않은 Socket.IO 연결 차단
+   *
+   * - /socket.io/ 경로로의 모든 요청을 사전 차단
+   * - 보안: 불필요한 WebSocket 연결 시도 방지
+   * - 로그 노이즈 감소
+   * - 향후 WebSocket 구현 시 이 미들웨어 제거 필요
+   */
+  app.use(new BlockWebSocketMiddleware().use);
 
   /**
    * Global Validation Pipe: 요청 데이터 자동 검증

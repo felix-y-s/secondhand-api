@@ -21,6 +21,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { CategoriesModule } from './modules/categories/categories.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 @Module({
   imports: [
@@ -58,6 +59,8 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
     CategoriesModule,
     // Orders 모듈 (주문 관리)
     OrdersModule,
+    // Messages 모듈 (대화방 관리)
+    MessagesModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],

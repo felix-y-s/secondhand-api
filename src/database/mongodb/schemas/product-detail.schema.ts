@@ -57,7 +57,6 @@ export class ProductDetail extends Document {
 export const ProductDetailSchema = SchemaFactory.createForClass(ProductDetail);
 
 // 인덱스 설정
-ProductDetailSchema.index({ productId: 1 });
 ProductDetailSchema.index({
   'specifications.location.coordinates': '2dsphere',
 });
