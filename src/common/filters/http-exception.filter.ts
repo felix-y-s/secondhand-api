@@ -62,15 +62,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
       exception instanceof Error ? exception.stack : '',
     );
 
-    // 응답 반환
+    // 응답 반환 (TransformInterceptor와 동일한 형식)
     response.status(status).json({
       success: false,
       statusCode: status,
-      message,
-      ...(errors && { errors }),
+      error: {
+        message,
+        ...(errors && { details: errors }),
+      },
       timestamp: new Date().toISOString(),
-      path: request.url,
-      method: request.method,
     });
   }
 

@@ -60,8 +60,15 @@ export class RedisModule implements OnModuleDestroy {
     };
   }
 
-  onModuleDestroy() {
+  async onModuleDestroy() {
     if (!RedisModule.redis) return;
-    RedisModule.redis.quit();
+    
+    // 모든 이벤트 리스너 제거
+    RedisModule.redis.removeAllListeners('connect');
+    RedisModule.redis.removeAllListeners('error');
+    RedisModule.redis.removeAllListeners('end');
+    
+    // Redis 연결 종료
+    await RedisModule.redis.quit();
   }
 }

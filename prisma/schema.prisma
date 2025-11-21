@@ -12,33 +12,62 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+/// 사용자 모델
+/// 회원 정보, 인증, 프로필, 신뢰도 관리
 model User {
+  /// 사용자 고유 ID (UUID)
   id              String           @id @default(uuid())
+  /// 이메일 주소 (로그인 ID, 고유값)
   email           String           @unique
+  /// 비밀번호 (bcrypt 해시)
   password        String
+  /// 실명 (선택 사항)
   name            String?
+  /// 닉네임 (고유값, 필수)
   nickname        String           @unique
+  /// 전화번호 (선택 사항, 고유값)
   phoneNumber     String?          @unique
+  /// 프로필 이미지 URL
   profileImage    String?
+  /// 자기소개
   bio             String?
+  /// 사용자 역할 (ADMIN, USER, SELLER 등)
   role            Role             @default(USER)
+  /// 이메일 인증 여부
   emailVerified   Boolean          @default(false)
+  /// 전화번호 인증 여부
   phoneVerified   Boolean          @default(false)
+  /// 계정 활성화 여부 (탈퇴 시 false)
   isActive        Boolean          @default(true)
+  /// 평균 평점 (0.0 ~ 5.0)
   rating          Float            @default(0)
+  /// 받은 평점 개수
   ratingCount     Int              @default(0)
-  trustScore      Float            @default(0) // 신뢰도 점수 (0-100)
+  /// 신뢰도 점수 (0 ~ 100)
+  trustScore      Float            @default(0)
+  /// 계정 생성일시
   createdAt       DateTime         @default(now())
+  /// 최종 수정일시
   updatedAt       DateTime         @updatedAt
+  /// 마지막 로그인 일시
   lastLoginAt     DateTime?
+  /// 작성한 채팅 메시지 목록
   messages        ChatMessage[]
+  /// 참여 중인 채팅방 목록
   chatRooms       ChatRoomMember[]
+  /// 찜한 상품 목록
   favorites       Favorite[]
+  /// 받은 알림 목록
   notifications   Notification[]
+  /// 구매한 주문 목록
   orders          Order[]          @relation("buyer")
+  /// 판매한 주문 목록
   sales           Order[]          @relation("seller")
+  /// 등록한 상품 목록
   products        Product[]
+  /// 받은 리뷰 목록
   receivedReviews Review[]         @relation("reviewed")
+  /// 작성한 리뷰 목록
   reviews         Review[]         @relation("reviewer")
 
   @@index([email])
@@ -47,18 +76,32 @@ model User {
   @@map("users")
 }
 
+/// 카테고리 모델
+/// 상품 분류를 위한 계층형 카테고리 구조
 model Category {
+  /// 카테고리 고유 ID
   id        String     @id @default(uuid())
+  /// 카테고리 이름 (예: 전자기기, 가구)
   name      String     @unique
+  /// URL 친화적 슬러그 (예: electronics, furniture)
   slug      String     @unique
+  /// 카테고리 아이콘 (이모지 또는 아이콘 코드)
   icon      String?
+  /// 정렬 순서
   order     Int        @default(0)
+  /// 활성화 여부
   isActive  Boolean    @default(true)
+  /// 생성일시
   createdAt DateTime   @default(now())
+  /// 수정일시
   updatedAt DateTime   @updatedAt
+  /// 부모 카테고리 ID (계층 구조)
   parentId  String?
+  /// 부모 카테고리
   parent    Category?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  /// 하위 카테고리 목록
   children  Category[] @relation("CategoryHierarchy")
+  /// 이 카테고리에 속한 상품 목록
   products  Product[]
 
   @@index([parentId])
@@ -66,29 +109,54 @@ model Category {
   @@map("categories")
 }
 
+/// 상품 모델
+/// 중고거래 상품 정보 (제목, 가격, 상태, 위치 등)
 model Product {
+  /// 상품 고유 ID
   id                String           @id @default(uuid())
+  /// 판매자 ID
   sellerId          String
+  /// 카테고리 ID
   categoryId        String
+  /// 상품 제목 (최대 100자)
   title             String           @db.VarChar(100)
+  /// 상품 설명
   description       String
+  /// 가격 (원)
   price             Int
+  /// 상품 상태 (NEW, LIKE_NEW, GOOD, FAIR, POOR)
   condition         ProductCondition
+  /// 판매 상태 (ACTIVE, RESERVED, SOLD, DELETED)
   status            ProductStatus    @default(ACTIVE)
+  /// 택배 배송 가능 여부
   shippingAvailable Boolean          @default(false)
+  /// 직거래 가능 여부
   localPickup       Boolean          @default(true)
+  /// 거래 위치 (주소 또는 지역명)
   location          String?
+  /// 위도 (지도 표시용)
   latitude          Float?
+  /// 경도 (지도 표시용)
   longitude         Float?
+  /// 상품 이미지 URL 배열
   images            String[]         @default([])
+  /// 썸네일 이미지 URL
   thumbnail         String?
+  /// 조회수
   viewCount         Int              @default(0)
+  /// 등록일시
   createdAt         DateTime         @default(now())
+  /// 수정일시
   updatedAt         DateTime         @updatedAt
+  /// 판매 완료 일시
   soldAt            DateTime?
+  /// 이 상품을 찜한 사용자 목록
   favorites         Favorite[]
+  /// 이 상품의 주문 목록
   orders            Order[]
+  /// 상품이 속한 카테고리
   category          Category         @relation(fields: [categoryId], references: [id])
+  /// 판매자 정보
   seller            User             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
 
   @@index([sellerId])
@@ -102,31 +170,58 @@ model Product {
   @@map("products")
 }
 
+/// 주문 모델
+/// 상품 구매 주문 정보 및 배송/결제 관리
 model Order {
+  /// 주문 고유 ID
   id               String         @id @default(uuid())
+  /// 구매자 ID
   buyerId          String
+  /// 판매자 ID
   sellerId         String
+  /// 상품 ID
   productId        String
+  /// 주문 번호 (고유값)
   orderNumber      String         @unique
+  /// 총 금액 (상품 가격 + 배송비)
   totalAmount      Int
+  /// 배송비
   shippingFee      Int            @default(0)
+  /// 주문 상태 (PENDING, PAID, SHIPPING, DELIVERED 등)
   status           OrderStatus    @default(PENDING)
+  /// 수령인 이름
   recipientName    String?
+  /// 수령인 전화번호
   recipientPhone   String?
+  /// 배송지 주소
   shippingAddress  String?
+  /// 우편번호
   shippingPostcode String?
+  /// 송장 번호
   trackingNumber   String?
+  /// 결제 수단 (CARD, BANK_TRANSFER 등)
   paymentMethod    PaymentMethod?
+  /// 결제 ID (PG사 거래 ID)
   paymentId        String?        @unique
+  /// 결제 완료 일시
   paidAt           DateTime?
+  /// 주문 생성일시
   createdAt        DateTime       @default(now())
+  /// 수정일시
   updatedAt        DateTime       @updatedAt
+  /// 거래 확정 일시
   confirmedAt      DateTime?
+  /// 거래 완료 일시
   completedAt      DateTime?
+  /// 취소 일시
   cancelledAt      DateTime?
+  /// 구매자 정보
   buyer            User           @relation("buyer", fields: [buyerId], references: [id])
+  /// 상품 정보
   product          Product        @relation(fields: [productId], references: [id])
+  /// 판매자 정보
   seller           User           @relation("seller", fields: [sellerId], references: [id])
+  /// 거래 리뷰 (1:1 관계)
   review           Review?
 
   @@index([buyerId])
@@ -136,18 +231,32 @@ model Order {
   @@map("orders")
 }
 
+/// 리뷰 모델
+/// 거래 완료 후 작성하는 사용자 평가
 model Review {
+  /// 리뷰 고유 ID
   id         String   @id @default(uuid())
+  /// 주문 ID (1:1 관계)
   orderId    String   @unique
+  /// 리뷰 작성자 ID
   reviewerId String
+  /// 리뷰 대상자 ID (판매자 또는 구매자)
   reviewedId String
-  rating     Int      @db.SmallInt // 1-5 별점
+  /// 별점 (1~5)
+  rating     Int      @db.SmallInt
+  /// 리뷰 내용
   comment    String?  @db.Text
-  images     String[] @default([]) // 리뷰 이미지 URL 배열
+  /// 리뷰 이미지 URL 배열
+  images     String[] @default([])
+  /// 작성일시
   createdAt  DateTime @default(now())
+  /// 수정일시
   updatedAt  DateTime @updatedAt
+  /// 연결된 주문
   order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  /// 리뷰 대상자
   reviewed   User     @relation("reviewed", fields: [reviewedId], references: [id])
+  /// 리뷰 작성자
   reviewer   User     @relation("reviewer", fields: [reviewerId], references: [id])
 
   @@index([reviewerId])
@@ -155,42 +264,73 @@ model Review {
   @@map("reviews")
 }
 
+/// 채팅방 모델
+/// 상품 거래를 위한 1:1 채팅방
 model ChatRoom {
+  /// 채팅방 고유 ID
   id        String           @id @default(uuid())
+  /// 연결된 상품 ID (선택 사항)
   productId String?
+  /// 생성일시
   createdAt DateTime         @default(now())
+  /// 최종 메시지 발송 일시
   updatedAt DateTime         @updatedAt
+  /// 채팅방의 메시지 목록
   messages  ChatMessage[]
+  /// 채팅방 참여자 목록
   members   ChatRoomMember[]
 
   @@map("chat_rooms")
 }
 
+/// 채팅방 멤버 모델
+/// 채팅방 참여자 정보 및 읽음 상태 관리
 model ChatRoomMember {
+  /// 멤버 고유 ID
   id         String    @id @default(uuid())
+  /// 채팅방 ID
   chatRoomId String
+  /// 사용자 ID
   userId     String
+  /// 마지막 읽은 시각
   lastReadAt DateTime?
+  /// 참여 일시
   joinedAt   DateTime  @default(now())
+  /// 채팅방 정보
   chatRoom   ChatRoom  @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  /// 사용자 정보
   user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([chatRoomId, userId])
   @@map("chat_room_members")
 }
 
+/// 채팅 메시지 모델
+/// 채팅방 내 개별 메시지
 model ChatMessage {
+  /// 메시지 고유 ID
   id          String      @id @default(uuid())
+  /// 채팅방 ID
   chatRoomId  String
+  /// 발신자 ID
   senderId    String
+  /// 메시지 내용
   content     String
+  /// 메시지 타입 (TEXT, IMAGE, FILE, SYSTEM)
   messageType MessageType @default(TEXT)
+  /// 파일 URL (IMAGE, FILE 타입)
   fileUrl     String?
+  /// 파일 이름
   fileName    String?
+  /// 읽음 여부
   isRead      Boolean     @default(false)
+  /// 읽은 시각
   readAt      DateTime?
+  /// 발송일시
   createdAt   DateTime    @default(now())
+  /// 채팅방 정보
   chatRoom    ChatRoom    @relation(fields: [chatRoomId], references: [id], onDelete: Cascade)
+  /// 발신자 정보
   sender      User        @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
   @@index([chatRoomId])
@@ -198,12 +338,20 @@ model ChatMessage {
   @@map("chat_messages")
 }
 
+/// 찜 모델
+/// 사용자가 관심 있는 상품 저장
 model Favorite {
+  /// 찜 고유 ID
   id        String   @id @default(uuid())
+  /// 사용자 ID
   userId    String
+  /// 상품 ID
   productId String
+  /// 찜한 일시
   createdAt DateTime @default(now())
+  /// 상품 정보
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  /// 사용자 정보
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, productId])
@@ -212,17 +360,30 @@ model Favorite {
   @@map("favorites")
 }
 
+/// 알림 모델
+/// 사용자에게 전송되는 시스템 알림
 model Notification {
+  /// 알림 고유 ID
   id          String           @id @default(uuid())
+  /// 수신자 ID
   userId      String
+  /// 알림 타입 (NEW_MESSAGE, ORDER_CREATED 등)
   type        NotificationType
+  /// 알림 제목
   title       String
+  /// 알림 내용
   message     String
+  /// 관련 엔티티 ID (상품, 주문 등)
   relatedId   String?
+  /// 관련 엔티티 타입 (Product, Order 등)
   relatedType String?
+  /// 읽음 여부
   isRead      Boolean          @default(false)
+  /// 읽은 시각
   readAt      DateTime?
+  /// 발송일시
   createdAt   DateTime         @default(now())
+  /// 수신자 정보
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
@@ -230,63 +391,70 @@ model Notification {
   @@map("notifications")
 }
 
+/// 사용자 역할
 enum Role {
-  ADMIN
-  USER
-  SELLER
-  BUYER
-  GUEST
+  ADMIN  /// 관리자
+  USER   /// 일반 사용자
+  SELLER /// 판매자
+  BUYER  /// 구매자
+  GUEST  /// 게스트
 }
 
+/// 상품 상태 (물리적 상태)
 enum ProductCondition {
-  NEW
-  LIKE_NEW
-  GOOD
-  FAIR
-  POOR
+  NEW      /// 새 상품
+  LIKE_NEW /// 거의 새 것
+  GOOD     /// 양호
+  FAIR     /// 보통
+  POOR     /// 나쁨
 }
 
+/// 상품 판매 상태
 enum ProductStatus {
-  ACTIVE
-  RESERVED
-  SOLD
-  DELETED
+  ACTIVE   /// 판매 중
+  RESERVED /// 예약됨
+  SOLD     /// 판매 완료
+  DELETED  /// 삭제됨
 }
 
+/// 주문 상태
 enum OrderStatus {
-  PENDING
-  PAYMENT_PENDING
-  PAID
-  SHIPPING
-  DELIVERED
-  CONFIRMED
-  CANCELLED
-  REFUNDED
+  PENDING         /// 주문 대기 중
+  PAYMENT_PENDING /// 결제 대기 중
+  PAID            /// 결제 완료
+  SHIPPING        /// 배송 중
+  DELIVERED       /// 배송 완료
+  CONFIRMED       /// 거래 확정
+  CANCELLED       /// 취소됨
+  REFUNDED        /// 환불 완료
 }
 
+/// 결제 수단
 enum PaymentMethod {
-  CARD
-  BANK_TRANSFER
-  VIRTUAL_ACCOUNT
-  KAKAOPAY
-  TOSSPAY
-  MEET_IN_PERSON
+  CARD            /// 신용/체크카드
+  BANK_TRANSFER   /// 계좌이체
+  VIRTUAL_ACCOUNT /// 가상계좌
+  KAKAOPAY        /// 카카오페이
+  TOSSPAY         /// 토스페이
+  MEET_IN_PERSON  /// 직거래 (현금)
 }
 
+/// 메시지 타입
 enum MessageType {
-  TEXT
-  IMAGE
-  FILE
-  SYSTEM
+  TEXT   /// 텍스트 메시지
+  IMAGE  /// 이미지 메시지
+  FILE   /// 파일 메시지
+  SYSTEM /// 시스템 메시지
 }
 
+/// 알림 타입
 enum NotificationType {
-  PRODUCT_LIKED
-  NEW_MESSAGE
-  ORDER_CREATED
-  ORDER_CONFIRMED
-  ORDER_CANCELLED
-  PAYMENT_COMPLETED
-  REVIEW_RECEIVED
-  SYSTEM
+  PRODUCT_LIKED     /// 상품 찜
+  NEW_MESSAGE       /// 새 메시지
+  ORDER_CREATED     /// 주문 생성
+  ORDER_CONFIRMED   /// 주문 확정
+  ORDER_CANCELLED   /// 주문 취소
+  PAYMENT_COMPLETED /// 결제 완료
+  REVIEW_RECEIVED   /// 리뷰 받음
+  SYSTEM            /// 시스템 공지
 }

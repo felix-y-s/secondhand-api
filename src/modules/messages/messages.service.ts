@@ -7,7 +7,7 @@ import {
 import { MessageRepository } from './repositories/messages.repository';
 import { ProductsService } from '@/modules/products/products.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { MessageType, ProductStatus } from '@prisma/client';
+import { MessageType, ProductStatus, User } from '@prisma/client';
 
 @Injectable()
 export class MessagesService {
@@ -36,7 +36,7 @@ export class MessagesService {
 
     // 상품 상태 확인
     if (product.status === ProductStatus.DELETED) {
-      throw new BadRequestException('');
+      throw new BadRequestException('삭제된 대화방 조회 시도');
     }
 
     const chatRoom = await this.repository.findOrCreateChatRoom(
@@ -184,7 +184,6 @@ export class MessagesService {
   async leaveChatRoom(chatRoomId: string, userId: string) {
     // 채팅방 멤버 확인
     const chatRoom = await this.repository.findChatRoomById(chatRoomId);
-    console.log('🚀 | MessagesService | leaveChatRoom | chatRoom:', chatRoom);
     if (!chatRoom) {
       throw new NotFoundException(`채팅방을 찾을 수 없습니다.`);
     }

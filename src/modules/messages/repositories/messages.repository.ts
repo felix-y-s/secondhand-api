@@ -32,9 +32,16 @@ export class MessageRepository {
           some: { userId },
         },
       },
-      include: {
+      select: {
+        id: true,
+        productId: true,
         members: {
-          include: {
+          select: {
+            id: true,
+            chatRoomId: true,
+            userId: true,
+            lastReadAt: true,
+            joinedAt: true,
             user: {
               select: {
                 id: true,

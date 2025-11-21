@@ -105,7 +105,7 @@ export class MessagesController {
   /**
    * 채팅방 나가기
    */
-  @Delete('chatRoom/:chatRoomId')
+  @Delete('chatrooms/:chatRoomId')
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '채팅방 나가기' })
   @ApiResponse({ status: 200, description: '채팅방 나가기' })
