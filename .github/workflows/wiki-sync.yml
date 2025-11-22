@@ -1,0 +1,78 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "docs/**/*.md"
+
+jobs:
+  sync-wiki:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Clone Wiki Repository
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.wiki.git" wiki
+
+      - name: Configure Git
+        run: |
+          cd wiki
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Sync Documentation
+        run: |
+          # docs 디렉토리 구조 그대로 wiki로 복사 (.github 제외)
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            docs/ wiki/
+
+      - name: Commit and Push Changes
+        run: |
+          cd wiki
+          git add .
+
+          # 변경사항이 있는지 확인
+          if git diff --staged --quiet; then
+            echo "📝 No changes to sync"
+            exit 0
+          fi
+
+          # 변경된 파일 목록 추출
+          CHANGED_FILES=$(git diff --staged --name-only | head -5)
+          FILE_COUNT=$(git diff --staged --name-only | wc -l)
+
+          # 커밋 메시지 생성
+          if [ "$FILE_COUNT" -le 5 ]; then
+            git commit -m "docs: Wiki 자동 동기화" \
+                       -m "변경된 파일:" \
+                       -m "$CHANGED_FILES" \
+                       -m "" \
+                       -m "Source: ${{ github.sha }}"
+          else
+            git commit -m "docs: Wiki 자동 동기화" \
+                       -m "${FILE_COUNT}개 파일 업데이트" \
+                       -m "" \
+                       -m "Source: ${{ github.sha }}"
+          fi
+          git push origin master
+
+      - name: Summary
+        if: success()
+        run: |
+          echo "✅ Wiki 동기화 완료"
+          echo "📄 Repository: ${{ github.repository }}"
+          echo "🔗 Wiki: https://github.com/${{ github.repository }}/wiki"
