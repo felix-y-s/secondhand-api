@@ -34,25 +34,11 @@ jobs:
 
       - name: Sync Documentation
         run: |
-          # docs 디렉토리의 파일들을 폴더 구조 반영하여 wiki로 복사
-          # GitHub Wiki는 폴더 구조를 지원하지 않으므로 파일명에 경로를 포함
-
-          # 기존 파일 모두 삭제 (Home.md 제외)
-          cd wiki
-          find . -name "*.md" ! -name "Home.md" -type f -delete
-          cd ..
-
-          # docs 디렉토리의 모든 .md 파일을 찾아서 복사
-          find docs -name "*.md" -type f | while read file; do
-            # docs/ 이후의 경로를 추출 (예: guides/setup.md)
-            relative_path="${file#docs/}"
-
-            # 슬래시를 하이픈으로 변경 (예: guides-setup.md)
-            wiki_filename=$(echo "$relative_path" | sed 's/\//-/g')
-
-            # wiki 디렉토리로 복사
-            cp "$file" "wiki/$wiki_filename"
-          done
+          # docs 디렉토리 구조 그대로 wiki로 복사 (.github 제외)
+          rsync -av --delete \
+            --exclude='.git' \
+            --exclude='.github' \
+            docs/ wiki/
 
       - name: Commit and Push Changes
         run: |
