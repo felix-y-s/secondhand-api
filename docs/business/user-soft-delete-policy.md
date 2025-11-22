@@ -1,4 +1,4 @@
-# Prisma Schema onDelete 수정 가이드
+# 사용자 소프트 삭제 정책
 
 ## 📋 개요
 
