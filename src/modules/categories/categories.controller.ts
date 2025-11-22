@@ -41,7 +41,7 @@ import { Role } from '@/common/auth/enums/role.enum';
  * - 계층 구조 지원 (부모-자식)
  * - 공개 API (조회) / 관리자 전용 API (생성, 수정, 삭제)
  */
-@ApiTags('Categories')
+@ApiTags('categories')
 @Controller('categories')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)

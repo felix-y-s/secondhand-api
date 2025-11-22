@@ -38,7 +38,7 @@ import { plainToInstance } from 'class-transformer';
 /**
  * 사용자 관리 컨트롤러
  */
-@ApiTags('Users')
+@ApiTags('users')
 @Controller('users')
 @UseGuards(JwtAuthGuard) // 기본적으로 모든 엔드포인트에 JWT 인증 적용
 @UseInterceptors(ClassSerializerInterceptor) // 응답 DTO 변환 (@Exclude, @Expose 적용)

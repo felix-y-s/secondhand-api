@@ -40,7 +40,7 @@ import { ProductStatus } from '@prisma/client';
 /**
  * 상품 API 컨트롤러
  */
-@ApiTags('Products')
+@ApiTags('products')
 @Controller('products')
 @UseGuards(JwtAuthGuard)
 @UseInterceptors(ClassSerializerInterceptor)

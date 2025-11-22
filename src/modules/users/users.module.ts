@@ -8,12 +8,14 @@ import { PrismaModule } from '@/prisma/prisma.module';
 import { UsersRepository } from './repositories/users.repository';
 import { JwtStrategy } from '@/common/auth/strategies/jwt.strategy';
 import { JwtRefreshStrategy } from '@/common/auth/strategies/jwt-refresh.strategy';
+import { OrdersModule } from '../orders/orders.module';
 
 /**
  * 사용자 관리 모듈
  */
 @Module({
   imports: [
+    OrdersModule,
     PrismaModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     // JWT 모듈 설정
@@ -29,12 +31,7 @@ import { JwtRefreshStrategy } from '@/common/auth/strategies/jwt-refresh.strateg
     }),
   ],
   controllers: [UsersController],
-  providers: [
-    UsersService,
-    UsersRepository,
-    JwtStrategy,
-    JwtRefreshStrategy,
-  ],
+  providers: [UsersService, UsersRepository, JwtStrategy, JwtRefreshStrategy],
   exports: [UsersService], // 다른 모듈에서 UsersService 사용 가능
 })
 export class UsersModule {}

@@ -311,4 +311,26 @@ export class OrdersService {
 
     return this.ordersRepository.delete(id);
   }
+
+  /**
+   * 진행 중인 주문 조회
+   * @description
+   * - 탈퇴 로직에서 사용자가 주문 가능 상태인지 확인을 위해 사용
+   * - 진행 중인 주문(PAID, SHIPPING, DELIVERED)이 있으면 탈퇴 금지
+   * 
+   * @param userId 사용자 아이디
+   * @return 진행 중인 주문이 있는지 유무
+   */
+  async hasOngoingOrdersByUserId(userId: string) {
+    const ongoingOrders = await this.ordersRepository.findMany({
+      where: {
+        OR: [{ sellerId: userId }, { buyerId: userId }],
+      },
+      select: {
+        status: true,
+      }
+    });
+
+    return ongoingOrders.some(order => order.status === 'PAID' || order.status === 'SHIPPING' || order.status === 'DELIVERED');
+  }
 }

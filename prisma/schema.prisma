@@ -157,7 +157,7 @@ model Product {
   /// 상품이 속한 카테고리
   category          Category         @relation(fields: [categoryId], references: [id])
   /// 판매자 정보
-  seller            User             @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  seller            User             @relation(fields: [sellerId], references: [id], onDelete: Restrict)
 
   @@index([sellerId])
   @@index([categoryId])

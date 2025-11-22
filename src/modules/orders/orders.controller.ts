@@ -33,7 +33,7 @@ import { Role } from '@/common/auth/enums/role.enum';
  * Orders Controller
  * 주문 관련 HTTP 요청 처리
  */
-@ApiTags('Orders')
+@ApiTags('orders')
 @Controller('orders')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)

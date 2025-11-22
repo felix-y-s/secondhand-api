@@ -137,8 +137,21 @@ export class OrdersRepository {
     take?: number;
     where?: Prisma.OrderWhereInput;
     orderBy?: Prisma.OrderOrderByWithRelationInput;
+    select?: Prisma.OrderSelect;
   }): Promise<Order[]> {
-    const { skip, take, where, orderBy } = params;
+    const { skip, take, where, orderBy, select } = params;
+    
+    // select가 제공되면 select 사용, 아니면 기본 include 사용
+    if (select) {
+      return this.prisma.order.findMany({
+        skip,
+        take,
+        where,
+        orderBy,
+        select,
+      }) as Promise<Order[]>;
+    }
+
     return this.prisma.order.findMany({
       skip,
       take,

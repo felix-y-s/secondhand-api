@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { OrdersService } from '../orders/orders.service';
 
 /**
  * 사용자 관리 서비스
@@ -23,6 +24,7 @@ export class UsersService {
     private readonly usersRepository: UsersRepository,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly ordersService: OrdersService,
   ) {}
 
   /**
@@ -73,7 +75,9 @@ export class UsersService {
       password: hashedPassword,
       nickname: createUserDto.nickname,
       ...(createUserDto.name && { name: createUserDto.name }),
-      ...(createUserDto.phoneNumber && { phoneNumber: createUserDto.phoneNumber }),
+      ...(createUserDto.phoneNumber && {
+        phoneNumber: createUserDto.phoneNumber,
+      }),
     });
 
     // 비밀번호 제외하고 반환
@@ -92,7 +96,9 @@ export class UsersService {
     const user = await this.usersRepository.findByEmail(loginUserDto.email);
 
     if (!user) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 일치하지 않습니다');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 일치하지 않습니다',
+      );
     }
 
     // 비활성화된 계정 체크
@@ -107,7 +113,9 @@ export class UsersService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('이메일 또는 비밀번호가 일치하지 않습니다');
+      throw new UnauthorizedException(
+        '이메일 또는 비밀번호가 일치하지 않습니다',
+      );
     }
 
     // 마지막 로그인 시간 업데이트
@@ -195,22 +203,48 @@ export class UsersService {
 
   /**
    * 사용자 삭제 (소프트 삭제 - isActive를 false로 변경)
+   * @description
+   * - 진행 중인 주문(판매자/구매자)이 있으면 삭제 불가
+   * - 판매 중인 상품(ACTIVE)만 DELETED 상태로 변경
+   * - 거래 완료된 상품(RESERVED, SOLD)과 주문/리뷰는 보존
+   *
    * @param id 사용자 ID
+   * @return 삭제된 사용자 정보
    * @throws NotFoundException 사용자가 존재하지 않는 경우
+   * @throws BadRequestException 진행 중인 거래가 있는 경우
    */
-  async remove(id: string): Promise<void> {
+  async remove(id: string): Promise<User> {
+    // 1. 사용자 존재 여부 확인
     const user = await this.usersRepository.findById(id);
-
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다');
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
-    // 소프트 삭제 (isActive를 false로 변경)
-    await this.usersRepository.softDelete(id);
+    // 2. 이미 삭제된 계정인지 확인
+    if (!user.isActive) {
+      throw new BadRequestException('이미 탈퇴한 계정입니다.');
+    }
+
+    // 3. 진행 중인 주문 확인
+    const hasOngoingOrders =
+      await this.ordersService.hasOngoingOrdersByUserId(id);
+    if (hasOngoingOrders) {
+      throw new ConflictException(
+        '진행 중인 거래가 있어 탈퇴할 수 없습니다. 모든 거래를 완료하거나 취소해주세요.',
+      );
+    }
+
+    // 4. 트랜잭션으로 소프트 삭제 및 관련 데이터 정리 수행
+    return await this.usersRepository.softDelete(id);
   }
 
   /**
    * JWT 토큰 생성 (Access Token + Refresh Token)
+   *
+   * @description
+   * - Access Token (15분)
+   * - Refresh Token (7일)
+   *
    * @param userId 사용자 ID
    * @param email 이메일
    * @param role 역할
@@ -249,6 +283,7 @@ export class UsersService {
    * @param userId 사용자 ID
    * @returns 새로운 Access Token
    * @throws NotFoundException 사용자가 존재하지 않는 경우
+   * @throws UnauthorizedException 비활성화된 계정인 경우
    */
   async refreshAccessToken(userId: string) {
     const user = await this.usersRepository.findById(userId);

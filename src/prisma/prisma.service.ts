@@ -68,10 +68,62 @@ export class PrismaService
   async onModuleInit() {
     try {
       await this.$connect();
+      
+      // 데이터베이스 연결 정보 파싱
+      const dbUrl = process.env.DATABASE_URL || '';
+      const dbInfo = this.parseDatabaseUrl(dbUrl);
+      
       this.logger.log('✅ PostgreSQL 데이터베이스 연결 성공');
+      this.logger.log(`📍 Host: ${dbInfo.host}`);
+      this.logger.log(`🔌 Port: ${dbInfo.port}`);
+      this.logger.log(`💾 Database: ${dbInfo.database}`);
+      this.logger.log(`👤 User: ${dbInfo.user}`);
     } catch (error) {
       this.logger.error('❌ PostgreSQL 데이터베이스 연결 실패', error);
       throw error;
+    }
+  }
+
+  /**
+   * DATABASE_URL 파싱하여 연결 정보 추출
+   * @param url DATABASE_URL 문자열
+   * @returns 파싱된 연결 정보
+   */
+  private parseDatabaseUrl(url: string): {
+    host: string;
+    port: string;
+    database: string;
+    user: string;
+  } {
+    try {
+      // postgresql://user:password@host:port/database 형식 파싱
+      const urlPattern = /postgresql:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/;
+      const match = url.match(urlPattern);
+
+      if (match) {
+        return {
+          user: match[1],
+          host: match[3],
+          port: match[4],
+          database: match[5].split('?')[0], // 쿼리 파라미터 제거
+        };
+      }
+
+      // 파싱 실패 시 기본값 반환
+      return {
+        host: 'unknown',
+        port: 'unknown',
+        database: 'unknown',
+        user: 'unknown',
+      };
+    } catch (error) {
+      this.logger.warn('DATABASE_URL 파싱 실패');
+      return {
+        host: 'unknown',
+        port: 'unknown',
+        database: 'unknown',
+        user: 'unknown',
+      };
     }
   }
 

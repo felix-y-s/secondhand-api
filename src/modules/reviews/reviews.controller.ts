@@ -38,7 +38,7 @@ import { CurrentUser, type JwtValidationResult } from '@/common/auth';
  * Reviews Controller
  * 리뷰 관련 HTTP 요청 처리
  */
-@ApiTags('Reviews')
+@ApiTags('reviews')
 @Controller('reviews')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
@@ -50,7 +50,10 @@ export class ReviewsController {
    * 리뷰 작성
    */
   @Post()
-  @ApiOperation({ summary: '리뷰 작성', description: '거래 완료 후 리뷰를 작성합니다' })
+  @ApiOperation({
+    summary: '리뷰 작성',
+    description: '거래 완료 후 리뷰를 작성합니다',
+  })
   @ApiResponse({
     status: 201,
     description: '리뷰 작성 성공',
@@ -60,8 +63,14 @@ export class ReviewsController {
   @ApiResponse({ status: 401, description: '인증 실패' })
   @ApiResponse({ status: 403, description: '권한 없음' })
   @ApiResponse({ status: 404, description: '주문을 찾을 수 없음' })
-  async create(@CurrentUser() user: JwtValidationResult, @Body() createReviewDto: CreateReviewDto) {
-    const review = await this.reviewsService.create(user.userId, createReviewDto);
+  async create(
+    @CurrentUser() user: JwtValidationResult,
+    @Body() createReviewDto: CreateReviewDto,
+  ) {
+    const review = await this.reviewsService.create(
+      user.userId,
+      createReviewDto,
+    );
     return {
       success: true,
       message: '리뷰가 작성되었습니다',
@@ -96,7 +105,10 @@ export class ReviewsController {
    * 리뷰 상세 조회
    */
   @Get(':id')
-  @ApiOperation({ summary: '리뷰 상세 조회', description: '리뷰 상세 정보를 조회합니다' })
+  @ApiOperation({
+    summary: '리뷰 상세 조회',
+    description: '리뷰 상세 정보를 조회합니다',
+  })
   @ApiParam({ name: 'id', description: '리뷰 ID' })
   @ApiResponse({
     status: 200,
@@ -129,7 +141,10 @@ export class ReviewsController {
    * 3. UI에서 "리뷰 작성" vs "리뷰 보기" 버튼 표시 결정
    */
   @Get('order/:orderId')
-  @ApiOperation({ summary: '주문별 리뷰 조회', description: '특정 주문의 리뷰를 조회합니다' })
+  @ApiOperation({
+    summary: '주문별 리뷰 조회',
+    description: '특정 주문의 리뷰를 조회합니다',
+  })
   @ApiParam({ name: 'orderId', description: '주문 ID' })
   @ApiResponse({
     status: 200,
@@ -141,7 +156,9 @@ export class ReviewsController {
     const review = await this.reviewsService.findByOrderId(orderId);
     return {
       success: true,
-      message: review ? '리뷰 정보를 조회했습니다' : '리뷰가 아직 작성되지 않았습니다',
+      message: review
+        ? '리뷰 정보를 조회했습니다'
+        : '리뷰가 아직 작성되지 않았습니다',
       data: review,
     };
   }
@@ -175,7 +192,10 @@ export class ReviewsController {
    * 리뷰 수정
    */
   @Patch(':id')
-  @ApiOperation({ summary: '리뷰 수정', description: '작성한 리뷰를 수정합니다' })
+  @ApiOperation({
+    summary: '리뷰 수정',
+    description: '작성한 리뷰를 수정합니다',
+  })
   @ApiParam({ name: 'id', description: '리뷰 ID' })
   @ApiResponse({
     status: 200,
@@ -208,7 +228,10 @@ export class ReviewsController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: '리뷰 삭제', description: '작성한 리뷰를 삭제합니다' })
+  @ApiOperation({
+    summary: '리뷰 삭제',
+    description: '작성한 리뷰를 삭제합니다',
+  })
   @ApiParam({ name: 'id', description: '리뷰 ID' })
   @ApiResponse({ status: 200, description: '삭제 성공' })
   @ApiResponse({ status: 401, description: '인증 실패' })
