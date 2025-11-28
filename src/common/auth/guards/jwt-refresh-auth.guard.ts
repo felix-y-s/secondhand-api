@@ -35,12 +35,17 @@ export class JwtRefreshAuthGuard extends AuthGuard('jwt-refresh') {
   handleRequest<TUser = any>(
     err: any,
     user: any,
-    _info: any,
+    info: any, // Passport 라이브러리 내부에서 발생한 에러 (만료, 서명 오류 등)
     _context: ExecutionContext,
     _status?: any,
   ): TUser {
     // 에러가 발생했거나 사용자 정보가 없는 경우
     if (err || !user) {
+      // info에 에러 정보가 있는 경우 (만료, 서명 오류 등)
+      if (info instanceof Error) {
+        throw new UnauthorizedException(`jwt 인증오류: ${info.message}`);
+      }
+
       throw (
         err || new UnauthorizedException('Refresh Token이 유효하지 않습니다')
       );

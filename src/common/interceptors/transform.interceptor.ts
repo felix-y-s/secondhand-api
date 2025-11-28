@@ -30,11 +30,12 @@ export class TransformInterceptor<T>
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<Response<T>> {
-    const response = context.switchToHttp().getResponse();
-    const statusCode = response.statusCode;
-
     return next.handle().pipe(
       map((data) => {
+        // 컨트롤러 실행 후에 statusCode 읽기 (@HttpCode 데코레이터 적용된 값)
+        const response = context.switchToHttp().getResponse();
+        const statusCode = response.statusCode;
+
         // 이미 변환된 응답인지 확인 (success 필드가 있으면 변환된 것으로 간주)
         if (data && typeof data === 'object' && 'success' in data) {
           return data;

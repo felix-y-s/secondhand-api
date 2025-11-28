@@ -9,7 +9,7 @@ import { UsersRepository } from './repositories/users.repository';
 import { CreateUserDto, UpdateUserDto, LoginUserDto } from './dto';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
-import { JwtService } from '@nestjs/jwt';
+import { JsonWebTokenError, JwtService, TokenExpiredError } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { OrdersService } from '../orders/orders.service';
 
@@ -217,12 +217,12 @@ export class UsersService {
     // 1. 사용자 존재 여부 확인
     const user = await this.usersRepository.findById(id);
     if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
     }
 
     // 2. 이미 삭제된 계정인지 확인
     if (!user.isActive) {
-      throw new BadRequestException('이미 탈퇴한 계정입니다.');
+      throw new BadRequestException('이미 탈퇴한 계정입니다');
     }
 
     // 3. 진행 중인 주문 확인
@@ -280,6 +280,9 @@ export class UsersService {
 
   /**
    * Refresh Token으로 새로운 Access Token 발급
+   * @description
+   * - refresh token의 유효성은 "JwtRefreshAuthGuard"에서 확인
+   
    * @param userId 사용자 ID
    * @returns 새로운 Access Token
    * @throws NotFoundException 사용자가 존재하지 않는 경우

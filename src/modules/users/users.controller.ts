@@ -34,6 +34,7 @@ import type { JwtValidationResult } from '@/common/auth/interfaces/jwt-payload.i
 import { ResponseDto } from '@/common/dto';
 import { ApiGetResponses } from '@/common/decorators';
 import { plainToInstance } from 'class-transformer';
+import { Throttle } from '@nestjs/throttler';
 
 /**
  * 사용자 관리 컨트롤러
