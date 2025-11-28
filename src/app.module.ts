@@ -22,6 +22,7 @@ import { CategoriesModule } from './modules/categories/categories.module';
 import { OrdersModule } from './modules/orders/orders.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { MessagesModule } from './modules/messages/messages.module';
+import { NotificationModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -34,6 +35,13 @@ import { MessagesModule } from './modules/messages/messages.module';
         allowUnknown: true,
         abortEarly: false,
       },
+      // 환경별 파일 로드
+      // NODE_ENV에 따라 적절한 파일 선택
+      envFilePath:
+        process.env.NODE_ENV === 'test'
+          ? ['.env.test', '.env.development', '.env']
+          : ['.env.development', '.env'],
+      expandVariables: true,
     }),
     // Winston 로거 설정 (전역 사용 가능)
     WinstonModule.forRoot(winstonConfig),
@@ -64,25 +72,53 @@ import { MessagesModule } from './modules/messages/messages.module';
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: () => [
-        {
-          name: 'short', // 짧은 시간 제한 (예: 로그인, 민감한 API)
-          ttl: 60000, // 1분 (밀리초)
-          limit: 10, // 1분당 10회
-        },
-        {
-          name: 'medium', // 중간 시간 제한 (일반 API)
-          ttl: 60000, // 1분
-          limit: 30, // 1분당 30회
-        },
-        {
-          name: 'long', // 긴 시간 제한 (읽기 전용 API)
-          ttl: 60000, // 1분
-          limit: 100, // 1분당 100회
-        },
-      ],
+      useFactory: (configService: ConfigService) => {
+        const isTest = configService.get('app.nodeEnv') === 'test';
+
+        // 테스트 환경에서는 Rate Limiting 비활성화
+        if (isTest) {
+          return [
+            {
+              name: 'short',
+              ttl: 60000,
+              limit: 1000000, // 사실상 무제한
+            },
+            {
+              name: 'medium',
+              ttl: 60000,
+              limit: 1000000,
+            },
+            {
+              name: 'long',
+              ttl: 60000,
+              limit: 1000000,
+            },
+          ];
+        }
+
+        // 프로덕션/개발 환경
+        return [
+          {
+            name: 'short', // 짧은 시간 제한 (예: 로그인, 민감한 API)
+            ttl: 60000, // 1분 (밀리초)
+            limit: 10, // 1분당 10회
+          },
+          {
+            name: 'medium', // 중간 시간 제한 (일반 API)
+            ttl: 60000, // 1분
+            limit: 30, // 1분당 30회
+          },
+          {
+            name: 'long', // 긴 시간 제한 (읽기 전용 API)
+            ttl: 60000, // 1분
+            limit: 100, // 1분당 100회
+          },
+        ];
+      },
     }),
     ReviewsModule,
+    // Notification 모듈
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [

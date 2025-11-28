@@ -2,6 +2,22 @@
  * 애플리케이션 설정 파일
  * - 환경 변수를 구조화된 객체로 변환
  * - 타입 안정성 제공
+ * 
+ * 사용예:
+ * ```typescript
+ * // ConfigModule을 앱에 등록
+ * ConfigModule.forRoot({
+ *   isGlobal: true,
+ *   load: [configuration],
+ * })
+ * 
+ * // ConfigService로 설정값 주입받아 사용
+ * constructor(private configService: ConfigService) {}
+ * 
+ * // 설정값 접근
+ * const port = this.configService.get<number>('app.port');
+ * const dbHost = this.configService.get<string>('database.postgres.host');
+ * ```
  */
 export default () => ({
   // 애플리케이션 기본 설정
