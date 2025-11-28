@@ -6,6 +6,8 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { HttpExceptionFilter } from '@/common/filters';
+import { Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 /**
  * Message API E2E 테스트
@@ -16,9 +18,9 @@ describe('MessagesController', () => {
   let eventEmitter: EventEmitter2;
 
   let testCategoryId: string;
-  let testSellerId: string = 'e13731a8-4367-497c-a0f2-daf746917fca';
-  let testSellerEmail: string = 'user1@test.com';
-  let testBuyerEmail: string = 'user11@example.com';
+  let testSellerId: string;
+  let testSellerEmail: string;
+  let testBuyerEmail: string;
   let testProductId: string;
   let accessToken: string;
   let testPassword = 'Password123!';
@@ -38,7 +40,10 @@ describe('MessagesController', () => {
     }
 
     const payload = JSON.parse(
-      Buffer.from(response.body.data.accessToken.split('.')[1], 'base64').toString(),
+      Buffer.from(
+        response.body.data.accessToken.split('.')[1],
+        'base64',
+      ).toString(),
     );
 
     return {
@@ -114,6 +119,15 @@ describe('MessagesController', () => {
         id: testCategoryId,
       },
     });
+
+    // 사용자 삭제
+    await prisma.user.deleteMany({
+      where: {
+        id: {
+          in: [testSellerId, loginUserId],
+        },
+      },
+    });
   }
 
   beforeAll(async () => {
@@ -149,10 +163,41 @@ describe('MessagesController', () => {
     prisma = app.get<PrismaService>(PrismaService);
     eventEmitter = app.get<EventEmitter2>(EventEmitter2);
 
+    const timestamp = Date.now();
+    testSellerEmail = `seller_${timestamp}@test.com`;
+    testBuyerEmail = `buyer_${timestamp}@test.com`;
+
+    // 사용자 생성
+    const hashedPassword = await bcrypt.hash(testPassword, 10);
+
+    // 판매자 생성
+    const seller = await prisma.user.create({
+      data: {
+        email: testSellerEmail,
+        password: hashedPassword,
+        name: '테스트판매자',
+        nickname: `seller_${Date.now()}`,
+        role: Role.SELLER,
+      },
+    });
+    testSellerId = seller.id;
+
+    // 구매자 생성
+    const buyer = await prisma.user.create({
+      data: {
+        email: testBuyerEmail,
+        password: hashedPassword,
+        name: '테스트구매자',
+        nickname: `buyer_${Date.now()}`,
+        role: Role.USER,
+      },
+    });
+    loginUserId = buyer.id;
+
     // 테스트 사용자 로그인
     const loginData = await loginUser(testBuyerEmail, testPassword);
     accessToken = loginData.accessToken;
-    loginUserId = loginData.userId;
+    // loginUserId는 이미 설정됨
 
     await initTest();
   });
@@ -179,7 +224,11 @@ describe('MessagesController', () => {
         sellerId: string;
       }>((resolve, reject) => {
         const timeout = setTimeout(() => {
-          reject(new Error('이벤트 타임아웃: chatroom.created 이벤트가 5초 내에 발행되지 않음'));
+          reject(
+            new Error(
+              '이벤트 타임아웃: chatroom.created 이벤트가 5초 내에 발행되지 않음',
+            ),
+          );
         }, 5000);
 
         eventEmitter.once('chatroom.created', (payload) => {

@@ -43,7 +43,7 @@ export class PrismaService
     });
 
     // 쿼리 로깅 (개발 환경에서만)
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
       this.$on('query' as never, (e: any) => {
         this.logger.debug(`Query: ${e.query}`);
         this.logger.debug(`Params: ${e.params}`);
@@ -73,11 +73,11 @@ export class PrismaService
       const dbUrl = process.env.DATABASE_URL || '';
       const dbInfo = this.parseDatabaseUrl(dbUrl);
       
-      this.logger.log('✅ PostgreSQL 데이터베이스 연결 성공');
-      this.logger.log(`📍 Host: ${dbInfo.host}`);
-      this.logger.log(`🔌 Port: ${dbInfo.port}`);
-      this.logger.log(`💾 Database: ${dbInfo.database}`);
-      this.logger.log(`👤 User: ${dbInfo.user}`);
+      // this.logger.log('✅ PostgreSQL 데이터베이스 연결 성공');
+      // this.logger.log(`📍 Host: ${dbInfo.host}`);
+      // this.logger.log(`🔌 Port: ${dbInfo.port}`);
+      // this.logger.log(`💾 Database: ${dbInfo.database}`);
+      // this.logger.log(`👤 User: ${dbInfo.user}`);
     } catch (error) {
       this.logger.error('❌ PostgreSQL 데이터베이스 연결 실패', error);
       throw error;
