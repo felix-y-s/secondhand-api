@@ -23,6 +23,7 @@ import { OrdersModule } from './modules/orders/orders.module';
 import { ReviewsModule } from './modules/reviews/reviews.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { NotificationModule } from './modules/notifications/notifications.module';
+import { FavoritesModule } from './modules/favorites/favorites.module';
 
 @Module({
   imports: [
@@ -69,6 +70,8 @@ import { NotificationModule } from './modules/notifications/notifications.module
     OrdersModule,
     // Messages 모듈 (대화방 관리)
     MessagesModule,
+    // Favorite 모듈 (찜하기)
+    FavoritesModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
     ThrottlerModule.forRootAsync({
       inject: [ConfigService],

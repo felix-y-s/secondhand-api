@@ -1,3 +1,15 @@
 {
-  "commentTranslate.hover.enabled": false
+  "commentTranslate.hover.enabled": false,
+  "sqltools.connections": [
+    {
+      "ssh": "Disabled",
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "practice_join",
+      "database": "join_practice",
+      "username": "nestjs"
+    }
+  ]
 }

@@ -11,7 +11,7 @@ import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { JwtPayload } from '@/common/auth';
-import { TestDataFactory } from '../../../test/fixtures/test-data.factory';
+import { TestDataFactory } from '@/test/fixtures/test-data.factory';
 
 const prefix = '/api/v1';
 
@@ -95,7 +95,7 @@ describe('Users API E2E 테스트', () => {
     prisma = app.get<PrismaService>(PrismaService);
     jwtService = app.get<JwtService>(JwtService);
     configService = app.get<ConfigService>(ConfigService);
-    testDataFactory = new TestDataFactory(prisma);
+    testDataFactory = new TestDataFactory(prisma, configService, jwtService);
   });
 
   afterAll(async () => {

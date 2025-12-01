@@ -196,6 +196,7 @@ async function bootstrap() {
     .addTag('notifications', '알림 서비스')
     .addTag('messages', '대화방')
     .addTag('reviews', '리뷰')
+    .addTag('favorites', '찜하기')
     .addBearerAuth(
       {
         type: 'http',

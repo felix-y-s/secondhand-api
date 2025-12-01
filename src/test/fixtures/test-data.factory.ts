@@ -1,4 +1,7 @@
+import { JwtPayload } from '@/common/auth';
 import { PrismaService } from '@/prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
+import { JwtService } from '@nestjs/jwt';
 import { OrderStatus, ProductStatus, Role } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
@@ -7,7 +10,11 @@ import * as bcrypt from 'bcrypt';
  * 복잡한 데이터 구조를 쉽게 생성하고 재사용할 수 있도록 지원
  */
 export class TestDataFactory {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService?: ConfigService,
+    private readonly jwtService?: JwtService,
+  ) {}
 
   /**
    * 기본 카테고리 생성
@@ -86,6 +93,7 @@ export class TestDataFactory {
     }> = {},
   ) {
     const timestamp = Date.now();
+    const randomtime = Math.random() * 10000;
     return await this.prisma.product.create({
       data: {
         title: overrides.title || `상품-${timestamp}`,
@@ -95,6 +103,8 @@ export class TestDataFactory {
         status: overrides.status || ProductStatus.ACTIVE,
         sellerId,
         categoryId,
+        createdAt: new Date(timestamp + randomtime),
+        updatedAt: new Date(timestamp + randomtime),
       },
     });
   }
@@ -120,6 +130,16 @@ export class TestDataFactory {
         status,
       },
     });
+  }
+
+  /**
+   * 찜하기 생성
+   */
+  async createFavorite(userId: string, productId: string) {
+    const favorite = await this.prisma.favorite.create({
+      data: { userId, productId },
+    });
+    return favorite;
   }
 
   /**
@@ -215,6 +235,51 @@ export class TestDataFactory {
   }
 
   /**
+   * 판매자와 상품 생성
+   */
+  async createUserWithProduct() {
+    const category = await this.createCategory();
+    const buyer = await this.createUser();
+    const seller = await this.createUser();
+    const product = await this.createProduct(seller.id, category.id);
+
+    return {
+      buyer,
+      seller,
+      product,
+      category,
+    };
+  }
+
+  /**
+   * 구매자와 찜 목록 추가
+   */
+  async createUserWithFavorites(count: number = 1) {
+    // 카테고리 만들고
+    const category = await this.createCategory();
+    const buyer = await this.createUser();
+    const seller = await this.createUser();
+
+    const favorites = await Promise.all(
+      Array.from({ length: count }).map(async (_, index) => {
+        const { id: productId } = await this.createProduct(
+          seller.id,
+          category.id,
+          {
+            title: `상품-${index + 1}`,
+          },
+        );
+        return await this.createFavorite(buyer.id, productId);
+      }),
+    );
+
+    return {
+      buyer,
+      favorites,
+    };
+  }
+
+  /**
    * 테스트 데이터 정리 헬퍼
    * 특정 이메일 패턴으로 생성된 모든 데이터 삭제
    */
@@ -242,6 +307,19 @@ export class TestDataFactory {
     // 카테고리는 재사용 가능하므로 선택적 삭제
   }
 
+  async createAccessToken(payload: JwtPayload) {
+    if (!this.jwtService) {
+      throw new Error('JWT 서비스가 설정되지 않았습니다.');
+    }
+    if (!this.configService) {
+      throw new Error('환경 변수 서비스가 설정되지 않았습니다.');
+    }
+    return await this.jwtService.signAsync(payload, {
+      secret: this.configService.get<string>('JWT_SECRET'),
+      expiresIn: '1h',
+    });
+  }
+
   /**
    * 모든 테스트 데이터 일괄 정리
    * Factory가 생성한 모든 timestamp 기반 데이터 삭제
@@ -257,8 +335,19 @@ export class TestDataFactory {
       },
     });
 
+    // 찜 목록 삭제(참조하는 product, user 가 삭제되면 같이 삭제되도록 설정되어 있지만, deleteMany일떄는 트리거 되지 않아 수동 삭제 필요
+    await this.prisma.favorite.deleteMany({
+      where: {
+        OR: [
+          // REMIND: 삭제 방법 학습
+          { product: { seller: { email: { contains: '@test.com' } } } },
+          { user: { email: { contains: '@test.com' } } },
+        ],
+      },
+    });
+
     // 상품 삭제
-    await this.    prisma.product.deleteMany({
+    await this.prisma.product.deleteMany({
       where: { seller: { email: { contains: '@test.com' } } },
     });
 

@@ -62,3 +62,4 @@ ssl
 .serena
 logs/
 prisma/schema.prisma.backup
+scripts/join_practice.sql
