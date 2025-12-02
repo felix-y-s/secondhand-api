@@ -103,7 +103,9 @@ export class UsersService {
 
     // 비활성화된 계정 체크
     if (!user.isActive) {
-      throw new UnauthorizedException('비활성화된 계정입니다');
+      throw new UnauthorizedException('비활성화된 계정입니다', {
+        cause: { userId: user.id, email: user.email },
+      });
     }
 
     // 비밀번호 검증

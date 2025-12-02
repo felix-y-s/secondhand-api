@@ -1,4 +1,4 @@
-import { CurrentUser, JwtAuthGuard } from '@/common/auth';
+import { CurrentUser, JwtAuthGuard } from '@/modules/auth';
 import {
   Body,
   Controller,

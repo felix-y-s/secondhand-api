@@ -24,6 +24,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { MessagesModule } from './modules/messages/messages.module';
 import { NotificationModule } from './modules/notifications/notifications.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -48,6 +49,8 @@ import { FavoritesModule } from './modules/favorites/favorites.module';
     WinstonModule.forRoot(winstonConfig),
     // 커스텀 로거 모듈 (거래 로그 등)
     LoggerModule,
+    // Auth 모듈 (JWT)
+    AuthModule,
     // Prisma 모듈 (PostgreSQL 연결)
     PrismaModule,
     // MongoDB 모듈 (비구조화 데이터)

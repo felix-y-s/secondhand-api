@@ -24,10 +24,7 @@ import {
 } from '@nestjs/swagger';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto, UpdateOrderDto, QueryOrdersDto } from './dto';
-import { JwtAuthGuard } from '@/common/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/auth/guards/roles.guard';
-import { Roles } from '@/common/auth/decorators/roles.decorator';
-import { Role } from '@/common/auth/enums/role.enum';
+import { JwtAuthGuard, RolesGuard, Roles, Role } from '@/modules/auth';
 
 /**
  * Orders Controller

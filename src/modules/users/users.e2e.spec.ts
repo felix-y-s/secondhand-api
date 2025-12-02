@@ -10,7 +10,7 @@ import { CreateUserDto } from './dto';
 import { JwtService } from '@nestjs/jwt';
 import { Role } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
-import { JwtPayload } from '@/common/auth';
+import { JwtPayload } from '@/modules/auth';
 import { TestDataFactory } from '@/test/fixtures/test-data.factory';
 
 const prefix = '/api/v1';

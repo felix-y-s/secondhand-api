@@ -30,10 +30,7 @@ import {
   ProductResponseDto,
   ProductListResponseDto,
 } from './dto/product-response.dto';
-import { JwtAuthGuard } from '@/common/auth/guards/jwt-auth.guard';
-import { Public } from '@/common/auth/decorators/public.decorator';
-import { CurrentUser } from '@/common/auth/decorators/current-user.decorator';
-import type { JwtValidationResult } from '@/common/auth/interfaces/jwt-payload.interface';
+import { JwtAuthGuard, Public, CurrentUser, type JwtValidationResult } from '@/modules/auth';
 import { ResponseDto } from '@/common/dto/response.dto';
 import { ProductStatus } from '@prisma/client';
 

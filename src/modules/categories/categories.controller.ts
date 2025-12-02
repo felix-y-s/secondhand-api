@@ -30,11 +30,7 @@ import {
   CategoryResponseDto,
 } from './dto';
 import { ResponseDto } from '@/common/dto/response.dto';
-import { Public } from '@/common/auth/decorators/public.decorator';
-import { Roles } from '@/common/auth/decorators/roles.decorator';
-import { JwtAuthGuard } from '@/common/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/auth/guards/roles.guard';
-import { Role } from '@/common/auth/enums/role.enum';
+import { Public, Roles, JwtAuthGuard, RolesGuard, Role } from '@/modules/auth';
 
 /**
  * 카테고리 API 컨트롤러

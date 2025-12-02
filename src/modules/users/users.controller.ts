@@ -26,11 +26,7 @@ import {
   UserResponseDto,
   AuthResponseDto,
 } from './dto';
-import { JwtAuthGuard } from '@/common/auth/guards/jwt-auth.guard';
-import { JwtRefreshAuthGuard } from '@/common/auth/guards/jwt-refresh-auth.guard';
-import { Public } from '@/common/auth/decorators/public.decorator';
-import { CurrentUser } from '@/common/auth/decorators/current-user.decorator';
-import type { JwtValidationResult } from '@/common/auth/interfaces/jwt-payload.interface';
+import { JwtAuthGuard, JwtRefreshAuthGuard, Public, CurrentUser, type JwtValidationResult } from '@/modules/auth';
 import { ResponseDto } from '@/common/dto';
 import { ApiGetResponses } from '@/common/decorators';
 import { plainToInstance } from 'class-transformer';

@@ -15,7 +15,7 @@ import {
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(private readonly configService: ConfigService) {
-    const secret = configService.get<string>('JWT_SECRET') || 'your-secret-key';
+    const secret = configService.get<string>('jwt.secret') || 'your-secret-key';
 
     super({
       // Authorization 헤더에서 Bearer 토큰 추출

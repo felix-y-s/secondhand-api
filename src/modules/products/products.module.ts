@@ -1,33 +1,17 @@
 import { Module } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { ProductsRepository } from './repositories/products.repository';
 import { PrismaModule } from '@/prisma/prisma.module';
-import { JwtStrategy } from '@/common/auth/strategies/jwt.strategy';
+import { AuthModule } from '../auth/auth.module';
 
 /**
  * 상품 모듈
  */
 @Module({
-  imports: [
-    PrismaModule,
-    PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.registerAsync({
-      imports: [ConfigModule],
-      inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'your-secret-key',
-        signOptions: {
-          expiresIn: '15m',
-        },
-      }),
-    }),
-  ],
+  imports: [PrismaModule, AuthModule],
   controllers: [ProductsController],
-  providers: [ProductsService, ProductsRepository, JwtStrategy],
+  providers: [ProductsService, ProductsRepository],
   exports: [ProductsService, ProductsRepository],
 })
 export class ProductsModule {}

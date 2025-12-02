@@ -1,4 +1,4 @@
-import { JwtPayload } from '@/common/auth';
+import { JwtPayload } from '@/modules/auth';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';

@@ -1,7 +1,7 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
 import { FavoritesService } from './favorites.service';
 import { ApiBearerAuth, ApiOperation, ApiParam, ApiQuery, ApiTags } from '@nestjs/swagger';
-import { CurrentUser, JwtAuthGuard } from '@/common/auth';
+import { CurrentUser, JwtAuthGuard } from '@/modules/auth';
 import { ApiGetResponses } from '@/common/decorators';
 import { AddFavoriteDto } from './dto/add-favorite.dto';
 import { QueryFavoritesDto } from './dto/query-favorites.dto';

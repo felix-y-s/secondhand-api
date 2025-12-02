@@ -30,9 +30,8 @@ import {
   ReviewsListResponseDto,
   TrustScoreResponseDto,
 } from './dto';
-import { JwtAuthGuard } from '@/common/auth/guards/jwt-auth.guard';
-import { RolesGuard } from '@/common/auth/guards/roles.guard';
-import { CurrentUser, type JwtValidationResult } from '@/common/auth';
+import { JwtAuthGuard, RolesGuard } from '@/modules/auth';
+import { CurrentUser, type JwtValidationResult } from '@/modules/auth';
 
 /**
  * Reviews Controller

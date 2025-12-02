@@ -57,8 +57,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
 
     // 에러 로깅
+    const cause = exception instanceof Error ? exception.cause : undefined;
     this.logger.error(
       `${request.method} ${request.url} - Status: ${status} - Message: ${message}`,
+      cause ? JSON.stringify(cause) : '',
       exception instanceof Error ? exception.stack : '',
     );
 

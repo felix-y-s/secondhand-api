@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { SkipThrottle, ApiPublicResponses } from '@/common/decorators';
-import { Public } from '@/common/auth';
+import { Public } from '@/modules/auth';
 import { HealthService } from './health.service';
 import {
   HealthResponseDto,

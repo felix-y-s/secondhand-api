@@ -1,5 +1,5 @@
 import { AppModule } from '@/app.module';
-import { JwtPayload } from '@/common/auth';
+import { JwtPayload } from '@/modules/auth';
 import { HttpExceptionFilter } from '@/common/filters';
 import { TransformInterceptor } from '@/common/interceptors/transform.interceptor';
 import { PrismaService } from '@/prisma/prisma.service';
