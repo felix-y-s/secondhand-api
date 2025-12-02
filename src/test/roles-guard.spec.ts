@@ -1,10 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { RolesGuard } from '../src/common/auth/guards/roles.guard';
-import { Role } from '../src/common/auth/enums/role.enum';
-import { ROLES_KEY } from '../src/common/auth/decorators/roles.decorator';
-import { JwtValidationResult } from '../src/common/auth/interfaces/jwt-payload.interface';
+import { Role, RolesGuard } from '@/modules/auth';
+import type { JwtValidationResult } from '@/modules/auth';
 
 describe('RolesGuard', () => {
   let guard: RolesGuard;
@@ -72,7 +70,7 @@ describe('RolesGuard', () => {
       mockRequest.user = {
         userId: 'user-123',
         email: 'test@example.com',
-        role: null,
+        role: '',
       } as JwtValidationResult;
 
       expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);

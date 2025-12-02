@@ -4,7 +4,7 @@ import request from 'supertest';
 import { AppModule } from '@/app.module';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OrderStatus, ProductStatus, Role } from '@prisma/client';
-import { createTestCompletedOrder } from './helpers/test-data.helper';
+import { createTestCompletedOrder } from '../../test/helpers/test-data.helper';
 
 /**
  * Reviews API E2E 테스트

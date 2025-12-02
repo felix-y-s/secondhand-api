@@ -78,7 +78,7 @@ export class ReviewsController {
   }
 
   /**
-   * 리뷰 목록 조회
+   * ! 리뷰 목록 조회
    */
   @Get()
   @ApiOperation({
@@ -99,6 +99,7 @@ export class ReviewsController {
       data: result,
     };
   }
+  
 
   /**
    * 리뷰 상세 조회

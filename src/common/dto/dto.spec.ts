@@ -13,7 +13,7 @@ import {
   StringIdParamDto,
   SearchDto,
   DateRangeSearchDto,
-} from '../src/common/dto';
+} from './index';
 
 describe('Common DTO Validation', () => {
   describe('PaginationDto', () => {
