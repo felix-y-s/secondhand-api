@@ -37,11 +37,11 @@ export class CreateReviewDto {
   @ApiPropertyOptional({
     description: '리뷰 내용',
     example: '좋은 거래였습니다. 감사합니다!',
-    maxLength: 1000,
+    maxLength: 500,
   })
   @IsOptional()
   @IsString({ message: '리뷰 내용은 문자열이어야 합니다' })
-  @MaxLength(1000, { message: '리뷰 내용은 최대 1000자입니다' })
+  @MaxLength(500, { message: '리뷰 내용은 최대 500자입니다' })
   comment?: string;
 
   @ApiPropertyOptional({

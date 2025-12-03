@@ -5,7 +5,11 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { ReviewsRepository } from './repositories/reviews.repository';
-import { CreateReviewDto, UpdateReviewDto, QueryReviewsDto } from './dto';
+import {
+  CreateReviewDto,
+  UpdateReviewDto,
+  QueryReviewsDto,
+} from './dto';
 import { Review } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { OrderStatus } from '@prisma/client';
@@ -29,7 +33,10 @@ export class ReviewsService {
    * @param createReviewDto 리뷰 작성 DTO
    * @returns 생성된 리뷰
    */
-  async create(userId: string, createReviewDto: CreateReviewDto): Promise<Review> {
+  async create(
+    userId: string,
+    createReviewDto: CreateReviewDto,
+  ): Promise<Review> {
     const { orderId, rating, comment, images = [] } = createReviewDto;
 
     // 1. 주문 존재 여부 및 완료 상태 확인
@@ -47,8 +54,13 @@ export class ReviewsService {
     }
 
     // 2. 주문이 완료되었는지 확인 (CONFIRMED 또는 DELIVERED 상태)
-    if (order.status !== OrderStatus.CONFIRMED && order.status !== OrderStatus.DELIVERED) {
-      throw new BadRequestException('완료된 주문에만 리뷰를 작성할 수 있습니다');
+    if (
+      order.status !== OrderStatus.CONFIRMED &&
+      order.status !== OrderStatus.DELIVERED
+    ) {
+      throw new BadRequestException(
+        '완료된 주문에만 리뷰를 작성할 수 있습니다',
+      );
     }
 
     // 3. 구매자 또는 판매자만 리뷰 작성 가능
@@ -56,7 +68,9 @@ export class ReviewsService {
     const isSeller = order.sellerId === userId;
 
     if (!isBuyer && !isSeller) {
-      throw new ForbiddenException('이 주문에 대한 리뷰를 작성할 권한이 없습니다');
+      throw new ForbiddenException(
+        '이 주문에 대한 리뷰를 작성할 권한이 없습니다',
+      );
     }
 
     // 4. 이미 리뷰가 작성되었는지 확인
@@ -103,12 +117,12 @@ export class ReviewsService {
    * @param queryDto 조회 조건
    * @returns 리뷰 목록 및 메타데이터
    */
-  async findAll(queryDto: QueryReviewsDto) {
-    const { page = 1, limit = 20 } = queryDto;
+  async findAll(queryReviewsDto: QueryReviewsDto) {
+    const { page = 1, limit = 20 } = queryReviewsDto;
 
     const [reviews, total] = await Promise.all([
-      this.reviewsRepository.findMany(queryDto),
-      this.reviewsRepository.count(queryDto),
+      this.reviewsRepository.findMany(queryReviewsDto),
+      this.reviewsRepository.count(queryReviewsDto),
     ]);
 
     return {
@@ -152,7 +166,8 @@ export class ReviewsService {
     }
 
     // 최신 신뢰도 점수 계산
-    const trustScoreData = await this.reviewsRepository.calculateTrustScore(userId);
+    const trustScoreData =
+      await this.reviewsRepository.calculateTrustScore(userId);
 
     return {
       userId: user.id,
@@ -184,7 +199,10 @@ export class ReviewsService {
     }
 
     // 3. 리뷰 수정
-    const updatedReview = await this.reviewsRepository.update(id, updateReviewDto);
+    const updatedReview = await this.reviewsRepository.update(
+      id,
+      updateReviewDto,
+    );
 
     // 4. 평점이 변경되었으면 신뢰도 점수 재계산
     if (updateReviewDto.rating !== undefined) {

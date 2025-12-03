@@ -17,7 +17,8 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { NotificationsService } from './notifications.service';
 import { Notification } from '@prisma/client';
-import { CreateNotificationDto, PaginationQueryDto } from './dto';
+import { CreateNotificationDto } from './dto';
+import { PaginationDto } from '@/common/dto';
 
 @ApiTags('notifications')
 @Controller('notifications')
@@ -43,7 +44,7 @@ export class NotificationController {
   @ApiOperation({ summary: '내 알림 목록 조회' })
   async getMyNotifications(
     @CurrentUser('userId') userId: string,
-    @Query() query: PaginationQueryDto,
+    @Query() query: PaginationDto,
   ) {
     return this.notificationsService.findMyNotifications(
       userId,

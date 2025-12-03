@@ -123,23 +123,31 @@ export class ReviewsRepository {
 
   /**
    * 리뷰 목록 조회 (페이지네이션 + 필터)
-   * @param query 조회 조건
+   * @param queryDto 조회 조건
    * @returns 리뷰 목록
    */
-  async findMany(query: QueryReviewsDto): Promise<Review[]> {
-    const { reviewerId, reviewedId, minRating, maxRating, page = 1, limit = 20 } = query;
+  async findMany(queryDto: QueryReviewsDto): Promise<Review[]> {
+    const {
+      reviewerId,
+      reviewedId,
+      minRating,
+      maxRating,
+      page = 1,
+      limit = 20,
+    } = queryDto;
 
     const where: Prisma.ReviewWhereInput = {
       ...(reviewerId && { reviewerId }),
       ...(reviewedId && { reviewedId }),
       ...(minRating && { rating: { gte: minRating } }),
       ...(maxRating && { rating: { lte: maxRating } }),
-      ...(minRating && maxRating && {
-        rating: {
-          gte: minRating,
-          lte: maxRating,
-        },
-      }),
+      ...(minRating &&
+        maxRating && {
+          rating: {
+            gte: minRating,
+            lte: maxRating,
+          },
+        }),
     };
 
     return this.prisma.review.findMany({
@@ -182,23 +190,24 @@ export class ReviewsRepository {
 
   /**
    * 리뷰 총 개수 조회
-   * @param query 조회 조건
+   * @param queryDto 조회 조건
    * @returns 총 개수
    */
-  async count(query: QueryReviewsDto): Promise<number> {
-    const { reviewerId, reviewedId, minRating, maxRating } = query;
+  async count(queryDto: QueryReviewsDto): Promise<number> {
+    const { reviewerId, reviewedId, minRating, maxRating } = queryDto;
 
     const where: Prisma.ReviewWhereInput = {
       ...(reviewerId && { reviewerId }),
       ...(reviewedId && { reviewedId }),
       ...(minRating && { rating: { gte: minRating } }),
       ...(maxRating && { rating: { lte: maxRating } }),
-      ...(minRating && maxRating && {
-        rating: {
-          gte: minRating,
-          lte: maxRating,
-        },
-      }),
+      ...(minRating &&
+        maxRating && {
+          rating: {
+            gte: minRating,
+            lte: maxRating,
+          },
+        }),
     };
 
     return this.prisma.review.count({ where });
@@ -278,7 +287,13 @@ export class ReviewsRepository {
     const averageRating = totalRating / totalReviews;
 
     // 평점별 분포 계산
-    const ratingDistribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const ratingDistribution: Record<number, number> = {
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+    };
     reviews.forEach((review) => {
       ratingDistribution[review.rating]++;
     });
@@ -303,7 +318,8 @@ export class ReviewsRepository {
    * @returns 업데이트된 사용자
    */
   async updateUserTrustScore(userId: string): Promise<void> {
-    const { trustScore, averageRating, totalReviews } = await this.calculateTrustScore(userId);
+    const { trustScore, averageRating, totalReviews } =
+      await this.calculateTrustScore(userId);
 
     await this.prisma.user.update({
       where: { id: userId },

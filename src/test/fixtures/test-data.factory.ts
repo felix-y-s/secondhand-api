@@ -1,4 +1,5 @@
 import { JwtPayload } from '@/modules/auth';
+import { ReviewsRepository } from '@/modules/reviews/repositories';
 import { PrismaService } from '@/prisma/prisma.service';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -11,7 +12,7 @@ import * as bcrypt from 'bcrypt';
  */
 export class TestDataFactory {
   constructor(
-    private readonly prisma: PrismaService,
+    public readonly prisma: PrismaService,
     private readonly configService?: ConfigService,
     private readonly jwtService?: JwtService,
   ) {}
@@ -50,7 +51,7 @@ export class TestDataFactory {
     const password = overrides.password || 'Test1234!';
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    return await this.prisma.user.create({
+    const user = await this.prisma.user.create({
       data: {
         email: overrides.email || `user-${timestamp}@test.com`,
         password: hashedPassword,
@@ -59,6 +60,16 @@ export class TestDataFactory {
         isActive: overrides.isActive !== undefined ? overrides.isActive : true,
       },
     });
+    const token = await this.createAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
+
+    return {
+      ...user,
+      token,
+    };
   }
 
   /**
@@ -133,6 +144,34 @@ export class TestDataFactory {
   }
 
   /**
+   * 리뷰 생성
+   */
+  async createReview(
+    orderId: string,
+    reviewerId: string,
+    revieweeId: string,
+    rating: number,
+  ) {
+    return await this.prisma.review.create({
+      data: {
+        orderId,
+        reviewerId,
+        reviewedId: revieweeId,
+        rating,
+      },
+    });
+  }
+
+  /**
+   * 리뷰 삭제
+   */
+  async deleteReview(reviewId: string) {
+    await this.prisma.review.delete({
+      where: { id: reviewId },
+    });
+  }
+
+  /**
    * 찜하기 생성
    */
   async createFavorite(userId: string, productId: string) {
@@ -178,12 +217,29 @@ export class TestDataFactory {
    * 완료된 주문만 있는 사용자 시나리오 생성
    */
   async createUserWithCompletedOrder() {
+    return this.createUserWithOrder(OrderStatus.CONFIRMED);
+  }
+
+  /**
+   *
+   * @param status
+   * - PENDING:
+   * - PAYMENT_PENDING:
+   * - PAID:
+   * - SHIPPING:
+   * - DELIVERED:
+   * - CONFIRMED: 거래 확정
+   * - CANCELLED:
+   * - REFUNDED:
+   * @returns
+   */
+  async createUserWithOrder(status: OrderStatus = OrderStatus.CONFIRMED) {
     const data = await this.createUserWithOngoingOrder();
 
-    // 주문을 완료 상태로 변경 (CONFIRMED = 거래 확정)
+    // 주문 상태를 변경
     await this.prisma.order.update({
       where: { id: data.order.id },
-      data: { status: OrderStatus.CONFIRMED },
+      data: { status },
     });
 
     return data;
@@ -372,5 +428,163 @@ export class TestDataFactory {
         ],
       },
     });
+  }
+}
+
+// ! 테스트 데이터 생성 클래스가 너무 커져서 사용성/가독성이 떨어지는 문제를 개선하기 위해 별도의 클래스로 재구성
+export class TestReviewDataFactory {
+  private reviewer: Awaited<ReturnType<TestDataFactory['createUser']>>;
+  private reviewee: Awaited<ReturnType<TestDataFactory['createUser']>>;
+  private testDataFactory: TestDataFactory;
+  private prisma: PrismaService;
+
+  constructor() {}
+
+  static async create(testDataFactory: TestDataFactory, prisma: PrismaService) {
+    const instance = new TestReviewDataFactory();
+    instance.testDataFactory = testDataFactory;
+    instance.prisma = prisma;
+    const { seller, buyer } = await testDataFactory.createSellerAndBuyer();
+    instance.reviewer = buyer;
+    instance.reviewee = seller;
+    return instance;
+  }
+
+  /**
+   * 리뷰 가능한 주문 생성
+   */
+  async createReviewableOrder() {
+    const category = await this.testDataFactory.createCategory();
+    const product = await this.testDataFactory.createProduct(
+      this.reviewee.id,
+      category.id,
+    );
+    const order = await this.testDataFactory.createOrder(
+      this.reviewer.id,
+      this.reviewee.id,
+      product.id,
+      OrderStatus.CONFIRMED,
+    );
+    return {
+      reviewer: this.reviewer,
+      reviewee: this.reviewee,
+      order,
+    };
+  }
+
+  /**
+   * 이미 리뷰 작성된 주문 만들기
+   */
+  async createReviewedOrder() {
+    const category = await this.testDataFactory.createCategory();
+    const product = await this.testDataFactory.createProduct(
+      this.reviewee.id,
+      category.id,
+    );
+    const order = await this.testDataFactory.createOrder(
+      this.reviewer.id,
+      this.reviewee.id,
+      product.id,
+      OrderStatus.CONFIRMED,
+    );
+    await this.testDataFactory.createReview(
+      order.id,
+      this.reviewer.id,
+      this.reviewee.id,
+      Math.random() * 5 + 1,
+    );
+    return {
+      reviewer: this.reviewer,
+      reviewee: this.reviewee,
+      order,
+    };
+  }
+
+  /**
+   * 완료되지 않은 주문 생성
+   */
+  async createUncompletedOrder() {
+    const category = await this.testDataFactory.createCategory();
+    const product = await this.testDataFactory.createProduct(
+      this.reviewee.id,
+      category.id,
+    );
+    const order = await this.testDataFactory.createOrder(
+      this.reviewer.id,
+      this.reviewee.id,
+      product.id,
+      OrderStatus.PENDING,
+    );
+    return {
+      reviewer: this.reviewer,
+      reviewee: this.reviewee,
+      order,
+    };
+  }
+
+  async createReviewerWithReviews(count: number) {
+    // 정확한 리뷰 카운트 조회를 위해서 기본 리뷰는 정리
+    this.cleanupReview();
+    const category = await this.testDataFactory.createCategory();
+    const orders = Array<any>();
+    const products = Array<any>();
+    const reviews = Array<any>();
+
+    for (let index = 0; index < count; index++) {
+      const product = await this.testDataFactory.createProduct(
+        this.reviewee.id,
+        category.id,
+      );
+
+      const order = await this.testDataFactory.createOrder(
+        this.reviewer.id,
+        this.reviewee.id,
+        product.id,
+        OrderStatus.CONFIRMED,
+      );
+      const review = await this.testDataFactory.createReview(
+        order.id,
+        this.reviewer.id,
+        this.reviewee.id,
+        Math.random() * 5 + 1,
+      );
+      orders.push(order);
+      products.push(product);
+      reviews.push(review);
+    }
+
+    return {
+      category,
+      products,
+      orders,
+      reviews,
+      reviewer: this.reviewer,
+      reviewee: this.reviewee,
+    };
+  }
+
+  async deleteReview(reviewId: string) {
+    await this.testDataFactory.deleteReview(reviewId);
+  }
+
+  async cleanupReview() {
+    await this.prisma.review.deleteMany({
+      where: {
+        OR: [
+          { reviewer: { email: { contains: '@test.com' } } },
+          { reviewer: { email: { contains: '@test.com' } } },
+        ],
+      },
+    });
+  }
+
+  async cleanupAll() {
+    await this.cleanupReview();
+    await this.testDataFactory.cleanupAll();
+  }
+
+  async calculateTrustScore(userId: string) {
+    const reviewsRepo = new ReviewsRepository(this.prisma);
+    return await reviewsRepo.calculateTrustScore(userId);
   }
 }

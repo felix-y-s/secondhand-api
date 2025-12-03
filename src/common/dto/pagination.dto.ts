@@ -47,11 +47,12 @@ export class PaginationDto {
    */
   @ApiPropertyOptional({
     description: '정렬 필드',
+    default: 'createdAt',
     example: 'createdAt',
   })
   @IsOptional()
   @IsString({ message: 'sortBy는 문자열이어야 합니다' })
-  sortBy?: string;
+  sortBy?: string = 'createAt';
 
   /**
    * 정렬 순서 (ASC 또는 DESC)

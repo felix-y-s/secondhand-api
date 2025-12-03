@@ -17,7 +17,6 @@ import {
 import {
   ApiTags,
   ApiOperation,
-  ApiResponse,
   ApiBearerAuth,
   ApiParam,
 } from '@nestjs/swagger';
@@ -32,16 +31,21 @@ import {
 } from './dto';
 import { JwtAuthGuard, RolesGuard } from '@/modules/auth';
 import { CurrentUser, type JwtValidationResult } from '@/modules/auth';
+import {
+  ApiCreateResponses,
+  ApiDeleteResponses,
+  ApiGetResponses,
+} from '@/common/decorators';
 
 /**
  * Reviews Controller
  * 리뷰 관련 HTTP 요청 처리
  */
-@ApiTags('reviews')
 @Controller('reviews')
+@ApiTags('reviews')
+@ApiBearerAuth('access-token')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @UseInterceptors(ClassSerializerInterceptor)
-@ApiBearerAuth()
 export class ReviewsController {
   constructor(private readonly reviewsService: ReviewsService) {}
 
@@ -53,15 +57,8 @@ export class ReviewsController {
     summary: '리뷰 작성',
     description: '거래 완료 후 리뷰를 작성합니다',
   })
-  @ApiResponse({
-    status: 201,
-    description: '리뷰 작성 성공',
-    type: ReviewResponseDto,
-  })
-  @ApiResponse({ status: 400, description: '잘못된 요청' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  @ApiResponse({ status: 404, description: '주문을 찾을 수 없음' })
+  @ApiBearerAuth('access-token')
+  @ApiCreateResponses(ReviewResponseDto, '리뷰가 생성되었습니다')
   async create(
     @CurrentUser() user: JwtValidationResult,
     @Body() createReviewDto: CreateReviewDto,
@@ -78,52 +75,50 @@ export class ReviewsController {
   }
 
   /**
-   * ! 리뷰 목록 조회
+   * 사용자별 리뷰 목록
    */
-  @Get()
-  @ApiOperation({
-    summary: '리뷰 목록 조회',
-    description: '리뷰 목록을 조회합니다 (페이지네이션, 필터링 지원)',
-  })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: ReviewsListResponseDto,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  async findAll(@Query() queryDto: QueryReviewsDto) {
-    const result = await this.reviewsService.findAll(queryDto);
-    return {
-      success: true,
-      message: '리뷰 목록을 조회했습니다',
-      data: result,
-    };
+  @ApiOperation({ summary: '사용자별 리뷰 목록 조회' })
+  @ApiGetResponses(ReviewsListResponseDto)
+  @Get('user')
+  async getUsersReviews(@Query() queryDto: QueryReviewsDto) {
+    return this.reviewsService.findAll(queryDto);
   }
-  
 
   /**
-   * 리뷰 상세 조회
+   * 내가 받은 리뷰 목록
    */
-  @Get(':id')
+  @Get('received')
   @ApiOperation({
-    summary: '리뷰 상세 조회',
-    description: '리뷰 상세 정보를 조회합니다',
+    summary: '내가 받은 리뷰 조회',
+    description: '리뷰 목록을 조회합니다 (페이지내이션, 필터링 지원)',
   })
-  @ApiParam({ name: 'id', description: '리뷰 ID' })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: ReviewResponseDto,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  @ApiResponse({ status: 404, description: '리뷰를 찾을 수 없음' })
-  async findOne(@Param('id') id: string) {
-    const review = await this.reviewsService.findOne(id);
-    return {
-      success: true,
-      message: '리뷰 정보를 조회했습니다',
-      data: review,
-    };
+  @ApiBearerAuth('access-token')
+  @ApiGetResponses(ReviewsListResponseDto)
+  async getReceivedReviews(
+    @CurrentUser('userId') userId: string,
+    @Query() queryDto: QueryReviewsDto,
+  ) {
+    return this.reviewsService.findAll({
+      ...queryDto,
+      reviewedId: userId, // 내가 받은 리뷰
+    });
+  }
+
+  /**
+   * 내가 작성한 리뷰 목록
+   */
+  @Get('given')
+  @ApiOperation({ summary: '내가 작성한 리뷰 목록' })
+  @ApiBearerAuth('access-token')
+  @ApiGetResponses(ReviewsListResponseDto)
+  async getGivenReviews(
+    @CurrentUser('userId') userId: string,
+    @Query() queryDto: QueryReviewsDto,
+  ) {
+    return this.reviewsService.findAll({
+      ...queryDto,
+      reviewerId: userId, // 내가 작성한 리뷰
+    });
   }
 
   /**
@@ -146,12 +141,7 @@ export class ReviewsController {
     description: '특정 주문의 리뷰를 조회합니다',
   })
   @ApiParam({ name: 'orderId', description: '주문 ID' })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공 (리뷰가 없을 수 있음)',
-    type: ReviewResponseDto,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiGetResponses(ReviewResponseDto)
   async findByOrder(@Param('orderId') orderId: string) {
     const review = await this.reviewsService.findByOrderId(orderId);
     return {
@@ -159,6 +149,25 @@ export class ReviewsController {
       message: review
         ? '리뷰 정보를 조회했습니다'
         : '리뷰가 아직 작성되지 않았습니다',
+      data: review,
+    };
+  }
+
+  /**
+   * 리뷰 상세 조회
+   */
+  @Get(':id')
+  @ApiOperation({
+    summary: '리뷰 상세 조회',
+    description: '리뷰 상세 정보를 조회합니다',
+  })
+  @ApiParam({ name: 'id', description: '리뷰 ID' })
+  @ApiGetResponses(ReviewResponseDto)
+  async findOne(@Param('id') id: string) {
+    const review = await this.reviewsService.findOne(id);
+    return {
+      success: true,
+      message: '리뷰 정보를 조회했습니다',
       data: review,
     };
   }
@@ -172,13 +181,7 @@ export class ReviewsController {
     description: '사용자의 신뢰도 점수와 리뷰 통계를 조회합니다',
   })
   @ApiParam({ name: 'userId', description: '사용자 ID' })
-  @ApiResponse({
-    status: 200,
-    description: '조회 성공',
-    type: TrustScoreResponseDto,
-  })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  @ApiResponse({ status: 404, description: '사용자를 찾을 수 없음' })
+  @ApiGetResponses(TrustScoreResponseDto)
   async getTrustScore(@Param('userId') userId: string) {
     const trustScore = await this.reviewsService.getTrustScore(userId);
     return {
@@ -197,15 +200,7 @@ export class ReviewsController {
     description: '작성한 리뷰를 수정합니다',
   })
   @ApiParam({ name: 'id', description: '리뷰 ID' })
-  @ApiResponse({
-    status: 200,
-    description: '수정 성공',
-    type: ReviewResponseDto,
-  })
-  @ApiResponse({ status: 400, description: '잘못된 요청' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  @ApiResponse({ status: 404, description: '리뷰를 찾을 수 없음' })
+  @ApiGetResponses(ReviewResponseDto)
   async update(
     @Request() req,
     @Param('id') id: string,
@@ -233,12 +228,9 @@ export class ReviewsController {
     description: '작성한 리뷰를 삭제합니다',
   })
   @ApiParam({ name: 'id', description: '리뷰 ID' })
-  @ApiResponse({ status: 200, description: '삭제 성공' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
-  @ApiResponse({ status: 403, description: '권한 없음' })
-  @ApiResponse({ status: 404, description: '리뷰를 찾을 수 없음' })
-  async remove(@Request() req, @Param('id') id: string) {
-    await this.reviewsService.remove(id, req.user.userId);
+  @ApiDeleteResponses()
+  async remove(@Request() req, @Param('id') reviewId: string) {
+    await this.reviewsService.remove(reviewId, req.user.userId);
     return {
       success: true,
       message: '리뷰가 삭제되었습니다',
