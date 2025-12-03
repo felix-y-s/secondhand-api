@@ -177,22 +177,20 @@ describe('Reviews API (e2e)', () => {
           await testReviewDataFactory.createReviewerWithReviews(1));
         reviewId = reviews[0].id;
       });
-      describe('성공 케이스', () => {
-        it('리뷰 작성자가 리뷰 수정 성공', async () => {
-          const res = await request(app.getHttpServer())
-            .patch(`/api/v1/reviews/${reviewId}`)
-            .set('Authorization', `Bearer ${reviewer.token}`)
-            .send({
-              rating: 4,
-              comment: '수정된 리뷰입니다',
-            })
-            .expect(200);
+      it('리뷰 작성자가 리뷰 수정 성공', async () => {
+        const res = await request(app.getHttpServer())
+          .patch(`/api/v1/reviews/${reviewId}`)
+          .set('Authorization', `Bearer ${reviewer.token}`)
+          .send({
+            rating: 4,
+            comment: '수정된 리뷰입니다',
+          })
+          .expect(200);
 
-          const body = res.body;
-          expect(body.success).toBe(true);
-          expect(body.data.rating).toBe(4);
-          expect(body.data.comment).toBe('수정된 리뷰입니다');
-        });
+        const body = res.body;
+        expect(body.success).toBe(true);
+        expect(body.data.rating).toBe(4);
+        expect(body.data.comment).toBe('수정된 리뷰입니다');
       });
 
       it('다른 사용자가 리뷰 수정 시도 시 실패', async () => {
@@ -232,7 +230,7 @@ describe('Reviews API (e2e)', () => {
       });
 
       it('리뷰 작성자가 리뷰 삭제 성공', async () => {
-        const reviewId = reviews.pop().id;
+        const reviewId = reviews[0].id;
 
         // 🧪 When: 리뷰 삭제 api 실행
         const response = await request(app.getHttpServer())
@@ -246,7 +244,7 @@ describe('Reviews API (e2e)', () => {
 
       it('삭제된 리뷰 조회 시 실패', async () => {
         // 📝 Given: 리뷰 삭제
-        const deletedReviewId = reviews.pop().id;
+        const deletedReviewId = reviews[1].id;
         await testReviewDataFactory.deleteReview(deletedReviewId);
 
         // 🧪 When: 리뷰 조회 api 실행
@@ -257,9 +255,16 @@ describe('Reviews API (e2e)', () => {
       });
 
       it('삭제 후 판매자 신뢰도 점수가 재계산됨', async () => {
-        // 📝 Given: 사용자 신뢰도 캡쳐 후 리뷰 삭제
-        const deletedReviewId = reviews.pop().id;
-        const oldTrustScore = reviewee.trustScore;
+        // 📝 Given: 리뷰 삭제 전 신뢰도 조회
+        const beforeRes = await request(app.getHttpServer())
+          .get(`/api/v1/reviews/trust/${reviewee.id}`)
+          .set('Authorization', `Bearer ${reviewer.token}`)
+          .expect(200);
+        const beforeTrustScore = beforeRes.body.data.trustScore;
+        const beforeTotalReviews = beforeRes.body.data.totalReviews;
+
+        // 리뷰 삭제
+        const deletedReviewId = reviews[2].id;
         await testReviewDataFactory.deleteReview(deletedReviewId);
 
         // 🧪 When: 신뢰도 조회 api 실행
@@ -270,8 +275,8 @@ describe('Reviews API (e2e)', () => {
 
         const body = res.body;
         expect(body.success).toBe(true);
-        expect(body.data.trustScore).not.toEqual(oldTrustScore);
-        expect(body.data.totalReviews).toBe(reviews.length);
+        expect(body.data.trustScore).not.toEqual(beforeTrustScore);
+        expect(body.data.totalReviews).toBe(beforeTotalReviews - 1);
       });
     });
   });

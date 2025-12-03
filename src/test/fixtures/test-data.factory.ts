@@ -433,8 +433,6 @@ export class TestDataFactory {
 
 // ! 테스트 데이터 생성 클래스가 너무 커져서 사용성/가독성이 떨어지는 문제를 개선하기 위해 별도의 클래스로 재구성
 export class TestReviewDataFactory {
-  private reviewer: Awaited<ReturnType<TestDataFactory['createUser']>>;
-  private reviewee: Awaited<ReturnType<TestDataFactory['createUser']>>;
   private testDataFactory: TestDataFactory;
   private prisma: PrismaService;
 
@@ -445,8 +443,6 @@ export class TestReviewDataFactory {
     instance.testDataFactory = testDataFactory;
     instance.prisma = prisma;
     const { seller, buyer } = await testDataFactory.createSellerAndBuyer();
-    instance.reviewer = buyer;
-    instance.reviewee = seller;
     return instance;
   }
 
@@ -454,20 +450,23 @@ export class TestReviewDataFactory {
    * 리뷰 가능한 주문 생성
    */
   async createReviewableOrder() {
+    const { seller: reviewee, buyer: reviewer } =
+      await this.testDataFactory.createSellerAndBuyer();
     const category = await this.testDataFactory.createCategory();
     const product = await this.testDataFactory.createProduct(
-      this.reviewee.id,
+      reviewee.id,
       category.id,
     );
     const order = await this.testDataFactory.createOrder(
-      this.reviewer.id,
-      this.reviewee.id,
+      reviewer.id,
+      reviewee.id,
       product.id,
       OrderStatus.CONFIRMED,
     );
+
     return {
-      reviewer: this.reviewer,
-      reviewee: this.reviewee,
+      reviewer: reviewer,
+      reviewee: reviewee,
       order,
     };
   }
@@ -476,26 +475,28 @@ export class TestReviewDataFactory {
    * 이미 리뷰 작성된 주문 만들기
    */
   async createReviewedOrder() {
+    const { seller: reviewee, buyer: reviewer } =
+      await this.testDataFactory.createSellerAndBuyer();
     const category = await this.testDataFactory.createCategory();
     const product = await this.testDataFactory.createProduct(
-      this.reviewee.id,
+      reviewee.id,
       category.id,
     );
     const order = await this.testDataFactory.createOrder(
-      this.reviewer.id,
-      this.reviewee.id,
+      reviewer.id,
+      reviewee.id,
       product.id,
       OrderStatus.CONFIRMED,
     );
     await this.testDataFactory.createReview(
       order.id,
-      this.reviewer.id,
-      this.reviewee.id,
+      reviewer.id,
+      reviewee.id,
       Math.random() * 5 + 1,
     );
     return {
-      reviewer: this.reviewer,
-      reviewee: this.reviewee,
+      reviewer: reviewer,
+      reviewee: reviewee,
       order,
     };
   }
@@ -504,27 +505,29 @@ export class TestReviewDataFactory {
    * 완료되지 않은 주문 생성
    */
   async createUncompletedOrder() {
+    const { seller: reviewee, buyer: reviewer } =
+      await this.testDataFactory.createSellerAndBuyer();
     const category = await this.testDataFactory.createCategory();
     const product = await this.testDataFactory.createProduct(
-      this.reviewee.id,
+      reviewee.id,
       category.id,
     );
     const order = await this.testDataFactory.createOrder(
-      this.reviewer.id,
-      this.reviewee.id,
+      reviewer.id,
+      reviewee.id,
       product.id,
       OrderStatus.PENDING,
     );
     return {
-      reviewer: this.reviewer,
-      reviewee: this.reviewee,
+      reviewer: reviewer,
+      reviewee: reviewee,
       order,
     };
   }
 
   async createReviewerWithReviews(count: number) {
-    // 정확한 리뷰 카운트 조회를 위해서 기본 리뷰는 정리
-    this.cleanupReview();
+    const { seller: reviewee, buyer: reviewer } =
+      await this.testDataFactory.createSellerAndBuyer();
     const category = await this.testDataFactory.createCategory();
     const orders = Array<any>();
     const products = Array<any>();
@@ -532,20 +535,20 @@ export class TestReviewDataFactory {
 
     for (let index = 0; index < count; index++) {
       const product = await this.testDataFactory.createProduct(
-        this.reviewee.id,
+        reviewee.id,
         category.id,
       );
 
       const order = await this.testDataFactory.createOrder(
-        this.reviewer.id,
-        this.reviewee.id,
+        reviewer.id,
+        reviewee.id,
         product.id,
         OrderStatus.CONFIRMED,
       );
       const review = await this.testDataFactory.createReview(
         order.id,
-        this.reviewer.id,
-        this.reviewee.id,
+        reviewer.id,
+        reviewee.id,
         Math.random() * 5 + 1,
       );
       orders.push(order);
@@ -558,8 +561,8 @@ export class TestReviewDataFactory {
       products,
       orders,
       reviews,
-      reviewer: this.reviewer,
-      reviewee: this.reviewee,
+      reviewer: reviewer,
+      reviewee: reviewee,
     };
   }
 
