@@ -25,6 +25,7 @@ import { MessagesModule } from './modules/messages/messages.module';
 import { NotificationModule } from './modules/notifications/notifications.module';
 import { FavoritesModule } from './modules/favorites/favorites.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { MessagesMongoModule } from './modules/messages-mongo/messages-mongo.module';
 
 @Module({
   imports: [
@@ -73,6 +74,8 @@ import { AuthModule } from './modules/auth/auth.module';
     OrdersModule,
     // Messages 모듈 (대화방 관리)
     MessagesModule,
+    // MessagesMongo 모듈
+    MessagesMongoModule,
     // Favorite 모듈 (찜하기)
     FavoritesModule,
     // Throttler 모듈 (Rate Limiting, 전역 사용 가능)
@@ -102,22 +105,25 @@ import { AuthModule } from './modules/auth/auth.module';
           ];
         }
 
-        // 프로덕션/개발 환경
+        // 프로덕션/개발 환경 (환경 변수 기반)
         return [
           {
             name: 'short', // 짧은 시간 제한 (예: 로그인, 민감한 API)
-            ttl: 60000, // 1분 (밀리초)
-            limit: 10, // 1분당 10회
+            ttl: configService.get('throttle.short.ttl', 60000),
+            // limit: configService.get('throttle.short.limit', 5),
+            limit: 5,
           },
           {
             name: 'medium', // 중간 시간 제한 (일반 API)
-            ttl: 60000, // 1분
-            limit: 30, // 1분당 30회
+            ttl: configService.get('throttle.medium.ttl', 60000),
+            // limit: configService.get('throttle.midium.limit', 10),
+            limit: 10,
           },
           {
             name: 'long', // 긴 시간 제한 (읽기 전용 API)
-            ttl: 60000, // 1분
-            limit: 100, // 1분당 100회
+            ttl: configService.get('throttle.long.ttl', 60000),
+            // limit: configService.get('throttle.long.limit', 15),
+            limit: 15,
           },
         ];
       },

@@ -9,11 +9,16 @@ import { BlockWebSocketMiddleware } from './common/middleware';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
 import compression from 'compression';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true, // Winston이 로그를 버퍼링할 수 있도록 설정
   });
+
+  // 정적 파일 제공 (Swagger 커스텀 JS)
+  app.useStaticAssets(join(__dirname, '..', 'public'));
 
   // Winston 로거를 애플리케이션 로거로 설정
   app.useLogger(app.get(WINSTON_MODULE_NEST_PROVIDER));
@@ -228,6 +233,7 @@ async function bootstrap() {
       tagsSorter: 'alpha', // 태그 알파벳 순 정렬
       operationsSorter: 'alpha', // API 엔드포인트 알파벳 순 정렬
     },
+    customJs: '/swagger-custom.js', // JWT 자동 갱신 스크립트
   });
 
   await app.listen(process.env.PORT ?? 3000);
