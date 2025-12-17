@@ -19,8 +19,50 @@ export interface Response<T> {
 }
 
 /**
+ * 페이지네이션 메타데이터 인터페이스
+ */
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  nextPage: number | null;
+  previousPage: number | null;
+}
+
+/**
+ * 페이지네이션 결과 인터페이스
+ */
+export interface PaginatedResult<T> {
+  items: T[];
+  meta: PaginationMeta;
+}
+
+/**
  * 응답 변환 인터셉터
- * 모든 성공 응답을 일관된 형식으로 변환
+ *
+ * 모든 성공 응답을 일관된 형식으로 변환:
+ *
+ * 일반 응답:
+ * {
+ *   success: true,
+ *   statusCode: 200,
+ *   data: { ... },
+ *   timestamp: "..."
+ * }
+ *
+ * 페이지네이션 응답:
+ * {
+ *   success: true,
+ *   statusCode: 200,
+ *   data: {
+ *     items: [...],
+ *     meta: { total, page, limit, ... }
+ *   },
+ *   timestamp: "..."
+ * }
  */
 @Injectable()
 export class TransformInterceptor<T>
@@ -41,7 +83,25 @@ export class TransformInterceptor<T>
           return data;
         }
 
-        // 응답 데이터 변환
+        // 페이지네이션 응답 처리 ({ items, meta } 구조 감지)
+        if (
+          data &&
+          typeof data === 'object' &&
+          'items' in data &&
+          'meta' in data
+        ) {
+          return {
+            success: true,
+            statusCode,
+            data: {
+              items: (data as PaginatedResult<any>).items,
+              meta: (data as PaginatedResult<any>).meta,
+            },
+            timestamp: new Date().toISOString(),
+          };
+        }
+
+        // 일반 응답 데이터 변환
         return {
           success: true,
           statusCode,

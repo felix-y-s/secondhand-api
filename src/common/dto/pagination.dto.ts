@@ -1,13 +1,14 @@
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, IsString, Min, Max, IsIn } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationOptions } from '../types';
 
 /**
  * 페이지네이션 요청 DTO
  *
  * 클라이언트로부터 페이지네이션 파라미터를 받기 위한 기본 DTO
  */
-export class PaginationDto {
+export class PaginationDto implements PaginationOptions {
   /**
    * 페이지 번호 (1부터 시작)
    * @default 1

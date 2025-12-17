@@ -1,72 +1,4 @@
-/**
- * 페이지네이션 옵션 인터페이스
- */
-export interface PaginationOptions {
-  /** 현재 페이지 번호 (1부터 시작) */
-  page: number;
-  /** 페이지당 항목 수 */
-  limit: number;
-  /** 정렬 필드 (선택사항) */
-  sortBy?: string;
-  /** 정렬 순서 (선택사항) */
-  sortOrder?: 'ASC' | 'DESC';
-}
-
-/**
- * 페이지네이션 메타데이터 인터페이스
- */
-export interface PaginationMeta {
-  /** 전체 항목 수 */
-  total: number;
-  /** 현재 페이지 번호 */
-  page: number;
-  /** 페이지당 항목 수 */
-  limit: number;
-  /** 전체 페이지 수 */
-  totalPages: number;
-  /** 다음 페이지 존재 여부 */
-  hasNextPage: boolean;
-  /** 이전 페이지 존재 여부 */
-  hasPreviousPage: boolean;
-  /** 다음 페이지 번호 (없으면 null) */
-  nextPage: number | null;
-  /** 이전 페이지 번호 (없으면 null) */
-  previousPage: number | null;
-}
-
-/**
- * 페이지네이션 결과 인터페이스
- */
-export interface PaginatedResult<T> {
-  /** 데이터 배열 */
-  data: T[];
-  /** 페이지네이션 메타데이터 */
-  meta: PaginationMeta;
-}
-
-/**
- * 커서 기반 페이지네이션 옵션
- */
-export interface CursorPaginationOptions {
-  /** 커서 (마지막 항목의 ID 또는 타임스탬프) */
-  cursor?: string | number;
-  /** 페이지당 항목 수 */
-  limit: number;
-  /** 정렬 순서 */
-  sortOrder?: 'ASC' | 'DESC';
-}
-
-/**
- * 커서 기반 페이지네이션 결과
- */
-export interface CursorPaginatedResult<T> {
-  /** 데이터 배열 */
-  data: T[];
-  /** 다음 커서 (없으면 null) */
-  nextCursor: string | number | null;
-  /** 다음 페이지 존재 여부 */
-  hasNextPage: boolean;
-}
+import { CursorPaginatedResult, CursorPaginationOptions, PaginatedResult, PaginationOptions, PaginationMeta } from '../types';
 
 /**
  * 페이지네이션 유틸리티 클래스
@@ -75,43 +7,77 @@ export interface CursorPaginatedResult<T> {
  * - 페이지네이션 메타데이터 생성
  * - Skip/Take 계산
  * - 커서 기반 페이지네이션 지원
+ * @description
+ * 사용 패턴
+ * ```ts
+ * // Controller: optional 필드로 받음
+ * async getMessages(@Query() query: PaginationDto) {
+ *   // query implements PaginationOptions
+ * }
+ * 
+ * // Service: PaginationUtil.normalize()로 Required로 변환
+ * async findMessages(options: PaginationOptions) {
+ *   const normalized = PaginationUtil.normalize(options);
+ *   // normalized: Required<PaginationOptions>
+ * }
+ * 
+ * // Repository: Required 타입으로 받음
+ * async find(options: Required<PaginationOptions>) {
+ *   // 모든 필드가 보장됨
+ * }
+ * ```
  */
 export class PaginationUtil {
   /**
-   * 페이지네이션 적용
+   * 페이지네이션 메타데이터 생성
    *
-   * @param data - 데이터 배열
    * @param total - 전체 항목 수
-   * @param options - 페이지네이션 옵션
-   * @returns 페이지네이션 결과
+   * @param options - 페이지네이션 옵션 (page, limit 필수)
+   * @returns 페이지네이션 메타데이터
    *
    * @example
-   * const result = PaginationUtil.paginate(users, 100, { page: 2, limit: 10 });
-   * // {
-   * //   data: [...],
-   * //   meta: { total: 100, page: 2, limit: 10, ... }
-   * // }
+   * const meta = PaginationUtil.createMeta(100, { page: 2, limit: 10 });
+   * // { total: 100, page: 2, limit: 10, totalPages: 10, hasNextPage: true, ... }
    */
-  static paginate<T>(
-    data: T[],
+  static createMeta(
     total: number,
-    options: PaginationOptions,
-  ): PaginatedResult<T> {
+    options: Required<Pick<PaginationOptions, 'page' | 'limit'>>,
+  ): PaginationMeta {
     const { page, limit } = options;
     const totalPages = Math.ceil(total / limit);
 
     return {
-      data,
-      meta: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPreviousPage: page > 1,
-        nextPage: page < totalPages ? page + 1 : null,
-        previousPage: page > 1 ? page - 1 : null,
-      },
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+      nextPage: page < totalPages ? page + 1 : null,
+      previousPage: page > 1 ? page - 1 : null,
+    };
+  }
+
+  /**
+   * 페이지네이션 결과 생성 (items + meta)
+   *
+   * @param items - 데이터 배열
+   * @param total - 전체 항목 수
+   * @param options - 페이지네이션 옵션 (page, limit 필수)
+   * @returns 페이지네이션 결과 { items, meta }
+   *
+   * @example
+   * const result = PaginationUtil.paginate(users, 100, { page: 2, limit: 10 });
+   * // { items: [...], meta: { total: 100, page: 2, limit: 10, ... } }
+   */
+  static paginate<T>(
+    items: T[],
+    total: number,
+    options: Required<Pick<PaginationOptions, 'page' | 'limit'>>,
+  ): PaginatedResult<T> {
+    return {
+      items,
+      meta: this.createMeta(total, options),
     };
   }
 
@@ -143,7 +109,7 @@ export class PaginationUtil {
   /**
    * Prisma용 페이지네이션 옵션 생성
    *
-   * @param options - 페이지네이션 옵션
+   * @param options - 페이지네이션 옵션 (page, limit 필수)
    * @returns Prisma 쿼리 옵션
    *
    * @example
@@ -152,7 +118,7 @@ export class PaginationUtil {
    *
    * await prisma.user.findMany(prismaOptions);
    */
-  static getPrismaOptions(options: PaginationOptions): {
+  static getPrismaOptions(options: Required<Pick<PaginationOptions, 'page' | 'limit'>> & Pick<PaginationOptions, 'sortBy' | 'sortOrder'>): {
     skip: number;
     take: number;
     orderBy?: Record<string, 'asc' | 'desc'>;
@@ -176,7 +142,7 @@ export class PaginationUtil {
   /**
    * MongoDB용 페이지네이션 옵션 생성
    *
-   * @param options - 페이지네이션 옵션
+   * @param options - 페이지네이션 옵션 (page, limit 필수)
    * @returns MongoDB 쿼리 옵션
    *
    * @example
@@ -185,7 +151,7 @@ export class PaginationUtil {
    *
    * await collection.find().skip(10).limit(10);
    */
-  static getMongoOptions(options: PaginationOptions): {
+  static getMongoOptions(options: Required<Pick<PaginationOptions, 'page' | 'limit'>> & Pick<PaginationOptions, 'sortBy' | 'sortOrder'>): {
     skip: number;
     limit: number;
     sort?: Record<string, 1 | -1>;
@@ -224,7 +190,7 @@ export class PaginationUtil {
    *   (item) => item.id
    * );
    * // {
-   * //   data: [...10 items],
+   * //   items: [...10 items],
    * //   nextCursor: '133',
    * //   hasNextPage: true
    * // }
@@ -247,38 +213,9 @@ export class PaginationUtil {
         : null;
 
     return {
-      data: paginatedData,
+      items: paginatedData,
       nextCursor,
       hasNextPage,
-    };
-  }
-
-  /**
-   * 페이지네이션 옵션 검증 및 정규화
-   *
-   * @param page - 페이지 번호
-   * @param limit - 페이지당 항목 수
-   * @param maxLimit - 최대 limit 값 (기본값: 100)
-   * @returns 정규화된 페이지네이션 옵션
-   *
-   * @example
-   * const options = PaginationUtil.normalizeOptions(0, 200);
-   * // { page: 1, limit: 100 } (음수 페이지는 1로, 초과 limit는 maxLimit로)
-   */
-  static normalizeOptions(
-    page: number,
-    limit: number,
-    maxLimit: number = 100,
-  ): {
-    page: number;
-    limit: number;
-  } {
-    const normalizedPage = page && page > 0 ? page : 1;
-    const normalizedLimit = limit && limit > 0 ? limit : 10;
-
-    return {
-      page: Math.max(1, normalizedPage),
-      limit: Math.min(normalizedLimit, maxLimit),
     };
   }
 
@@ -309,10 +246,10 @@ export class PaginationUtil {
   /**
    * 빈 페이지네이션 결과 생성
    *
-   * @param options - 페이지네이션 옵션
+   * @param options - 페이지네이션 옵션 (page, limit 필수)
    * @returns 빈 페이지네이션 결과
    */
-  static createEmptyResult<T>(options: PaginationOptions): PaginatedResult<T> {
+  static createEmptyResult<T>(options: Required<Pick<PaginationOptions, 'page' | 'limit'>>): PaginatedResult<T> {
     return this.paginate([], 0, options);
   }
 

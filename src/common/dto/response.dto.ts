@@ -1,9 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { PaginationMeta } from '../types';
+import { plainToInstance } from 'class-transformer';
 
 /**
  * 페이지네이션 메타데이터
  */
-export class PaginationMetaDto {
+export class PaginationMetaDto implements PaginationMeta {
   @ApiProperty({ description: '전체 항목 수', example: 100 })
   total: number;
 
