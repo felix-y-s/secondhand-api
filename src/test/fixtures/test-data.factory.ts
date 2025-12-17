@@ -15,6 +15,7 @@ export class TestDataFactory {
     public readonly prisma: PrismaService,
     private readonly configService?: ConfigService,
     private readonly jwtService?: JwtService,
+    private readonly options?: Record<string, unknown>,
   ) {}
 
   /**
@@ -46,6 +47,7 @@ export class TestDataFactory {
       role: Role;
       isActive: boolean;
     }> = {},
+    takeToken: boolean = true,
   ) {
     const timestamp = Date.now();
     const password = overrides.password || 'Test1234!';
@@ -60,15 +62,19 @@ export class TestDataFactory {
         isActive: overrides.isActive !== undefined ? overrides.isActive : true,
       },
     });
-    const token = await this.createAccessToken({
-      sub: user.id,
-      email: user.email,
-      role: user.role,
-    });
+
+    let token: string | null = null;
+    if (takeToken) {
+      token = await this.createAccessToken({
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      });
+    }
 
     return {
       ...user,
-      token,
+      ...(takeToken ? { token } : {}),
     };
   }
 
@@ -365,10 +371,12 @@ export class TestDataFactory {
 
   async createAccessToken(payload: JwtPayload) {
     if (!this.jwtService) {
-      throw new Error('JWT 서비스가 설정되지 않았습니다.');
+      throw new Error(
+        `JwtService가 주입되지 않았습니다. ${TestDataFactory.name} 생성 시 JwtService를 전달하세요.`,
+      );
     }
     if (!this.configService) {
-      throw new Error('환경 변수 서비스가 설정되지 않았습니다.');
+      throw new Error('ConfigService가 주입되지 않았습니다.');
     }
     return await this.jwtService.signAsync(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),
