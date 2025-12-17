@@ -5,7 +5,12 @@ import {
   ProductDetail,
   ProductDetailSchema,
 } from './schemas/product-detail.schema';
-import { Message, MessageSchema } from './schemas/message.schema';
+import {
+  Message,
+  MessageSchema,
+  ChatRoom,
+  ChatRoomSchema,
+} from '@/modules/messages-mongo/schemas';
 import { MongodbService } from './mongodb.service';
 
 /**
@@ -24,6 +29,7 @@ import { MongodbService } from './mongodb.service';
     MongooseModule.forFeature([
       { name: ProductDetail.name, schema: ProductDetailSchema },
       { name: Message.name, schema: MessageSchema },
+      { name: ChatRoom.name, schema: ChatRoomSchema},
     ]),
   ],
   providers: [MongodbService],

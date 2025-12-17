@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { DeleteResult, Model } from 'mongoose';
 import { ProductDetail } from './schemas/product-detail.schema';
-import { Message } from './schemas/message.schema';
+import { Message } from '@/modules/messages-mongo/schemas';
 
 /**
  * MongoDB 테스트용 서비스
