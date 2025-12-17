@@ -26,6 +26,7 @@ export default () => ({
     port: parseInt(process.env.PORT || '3000', 10),
     apiPrefix: process.env.API_PREFIX || 'api',
     apiVersion: process.env.API_VERSION || 'v1',
+    apiBasePath: `${process.env.API_PREFIX || 'api'}/${process.env.API_VERSION || 'v1'}`,
     corsOrigin: process.env.CORS_ORIGIN?.split(',') || [
       'http://localhost:3000',
     ],
@@ -125,6 +126,22 @@ export default () => ({
   swagger: {
     enabled: process.env.SWAGGER_ENABLED === 'true',
     path: process.env.SWAGGER_PATH || 'api-docs',
+  },
+
+  // Throttle 설정
+  throttle: {
+    short: {
+      ttl: process.env.THROTTLE_SHORT_TTL || 60000, // 1분당
+      limit: process.env.THROTTLE_SHORT_LIMIT || 10, // 10회 제한
+    },
+    midium: {
+      ttl: process.env.THROTTLE_MIDIUM_TTL || 60000,
+      limit: process.env.THROTTLE_MIDIUM_LIMIT || 30,
+    },
+    long: {
+      ttl: process.env.THROTTLE_LONG_TTL || 60000,
+      limit: process.env.THROTTLE_LONG_LIMIT || 100,
+    },
   },
 
   // 디버그 모드
