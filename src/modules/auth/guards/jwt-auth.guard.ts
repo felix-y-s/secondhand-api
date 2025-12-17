@@ -61,7 +61,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     if (err || !user) {
       // info에 에러 정보가 있는 경우 (만료, 서명 오류 등)
       if (info instanceof Error) {
-        throw new UnauthorizedException(`jwt 인증오류: ${info.message}`);
+        throw new UnauthorizedException(info.message);
       }
 
       throw err || new UnauthorizedException('인증에 실패했습니다');

@@ -153,6 +153,18 @@ export class UsersService {
   }
 
   /**
+   * 사용자 ID로 존재 유무 확인
+   * @param id 사용자 ID
+   * @throws NotFoundException 사용자가 존재하지 않는 경우
+   */
+  async ensureUserExists(id: string): Promise<void> {
+    const user = await this.usersRepository.findById(id);
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다');
+    }
+  }
+
+  /**
    * 사용자 정보 수정
    * @param id 사용자 ID
    * @param updateUserDto 수정할 정보

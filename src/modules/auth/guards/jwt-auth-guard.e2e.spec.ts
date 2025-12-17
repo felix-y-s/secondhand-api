@@ -364,7 +364,7 @@ describe('JwtAuthGuard (E2E)', () => {
           .expect(401)
           .expect((res) => {
             expect(res.body.message).toContain(
-              'jwt 인증오류: No auth token',
+              'No auth token',
             );
           });
       });

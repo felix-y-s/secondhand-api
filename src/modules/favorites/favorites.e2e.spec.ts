@@ -17,7 +17,7 @@ describe('Favorite API E2E', () => {
   let jwtService: JwtService;
   let configService: ConfigService;
   let testDataFactory: TestDataFactory;
-  let prefix: string;
+  let apiBasePath: string;
 
   beforeAll(async () => {
     const moduleRef: TestingModule = await Test.createTestingModule({
@@ -30,8 +30,8 @@ describe('Favorite API E2E', () => {
     configService = app.get<ConfigService>(ConfigService);
     testDataFactory = new TestDataFactory(prisma, configService, jwtService);
 
-    prefix = `${configService.get<string>('API_PREFIX')}/${configService.get<string>('API_VERSION')}`;
-    app.setGlobalPrefix(prefix);
+    apiBasePath = configService.getOrThrow<string>('app.apiBasePath');
+    app.setGlobalPrefix(apiBasePath);
 
     app.useGlobalPipes(
       new ValidationPipe({
@@ -81,7 +81,7 @@ describe('Favorite API E2E', () => {
       });
       it('찜하기', async () => {
         const res = await request(app.getHttpServer())
-          .post(`/${prefix}/favorites`)
+          .post(`/${apiBasePath}/favorites`)
           .set('Authorization', `Bearer ${accessToken}`)
           .send({
             productId,
@@ -108,13 +108,13 @@ describe('Favorite API E2E', () => {
           where: {
             userId: buyerId,
             productId,
-          }
+          },
         });
       });
 
       it('찜한 상품을 다시 찜하면 실패', async () => {
         const res = await request(app.getHttpServer())
-          .post(`/${prefix}/favorites`)
+          .post(`/${apiBasePath}/favorites`)
           .set('Authorization', `Bearer ${accessToken}`)
           .send({
             productId,
@@ -153,7 +153,7 @@ describe('Favorite API E2E', () => {
         const limit = 10;
         const res = await request(app.getHttpServer())
           .get(
-            `/${prefix}/favorites?page=${page}&limit=${limit}&order=createdAt&sort=asc`,
+            `/${apiBasePath}/favorites?page=${page}&limit=${limit}&order=createdAt&sort=asc`,
           )
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(200);
@@ -171,7 +171,7 @@ describe('Favorite API E2E', () => {
         const page = 20;
         const limit = 10;
         const res = await request(app.getHttpServer())
-          .get(`/${prefix}/favorites?page=${page}&limit=${limit}`)
+          .get(`/${apiBasePath}/favorites?page=${page}&limit=${limit}`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(200);
         const body = res.body;
@@ -188,7 +188,7 @@ describe('Favorite API E2E', () => {
     describe('실패 케이스', () => {
       it('입력값 오류', async () => {
         const res = await request(app.getHttpServer())
-          .get(`/${prefix}/favorites?page=a&limit=200&sort=s&order=o`)
+          .get(`/${apiBasePath}/favorites?page=a&limit=200&sort=s&order=o`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(400);
         const body = res.body;
@@ -225,7 +225,7 @@ describe('Favorite API E2E', () => {
     describe('성공 케이스', () => {
       it('찜 한 상품 조회', async () => {
         const res = await request(app.getHttpServer())
-          .get(`/${prefix}/favorites/${favoritesProductId}/exist`)
+          .get(`/${apiBasePath}/favorites/${favoritesProductId}/exist`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(200);
         const body = res.body;
@@ -234,7 +234,7 @@ describe('Favorite API E2E', () => {
       });
       it('찜 안한 상품 조회', async () => {
         const res = await request(app.getHttpServer())
-          .get(`/${prefix}/favorites/${notFavoritesProductId}/exist`)
+          .get(`/${apiBasePath}/favorites/${notFavoritesProductId}/exist`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(200);
         const body = res.body;
@@ -245,7 +245,7 @@ describe('Favorite API E2E', () => {
     describe('실패 케이스', () => {
       it('상품 아이디 포맷 오류', async () => {
         const res = await request(app.getHttpServer())
-          .get(`/${prefix}/favorites/not-exist-productID/exist`)
+          .get(`/${apiBasePath}/favorites/not-exist-productID/exist`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(400);
         const body = res.body;
@@ -273,7 +273,7 @@ describe('Favorite API E2E', () => {
     describe('성공 케이스', () => {
       it('찜 삭제', async () => {
         const res = await request(app.getHttpServer())
-          .delete(`/${prefix}/favorites/${favorites[0].productId}`)
+          .delete(`/${apiBasePath}/favorites/${favorites[0].productId}`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(200);
         const body = res.body;
@@ -290,7 +290,7 @@ describe('Favorite API E2E', () => {
     describe('실패 케이스', () => {
       it('잘못된 상품 아이디는 삭제 실패', async () => {
         const res = await request(app.getHttpServer())
-          .delete(`/${prefix}/favorites/not-exist`)
+          .delete(`/${apiBasePath}/favorites/not-exist`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(400);
 
@@ -303,7 +303,7 @@ describe('Favorite API E2E', () => {
       it('존재하지 않는 찜 삭제 시도', async () => {
         const randomProductId = uuidv4();
         const res = await request(app.getHttpServer())
-          .delete(`/${prefix}/favorites/${randomProductId}`)
+          .delete(`/${apiBasePath}/favorites/${randomProductId}`)
           .set('Authorization', `Bearer ${accessToken}`)
           .expect(200);
 

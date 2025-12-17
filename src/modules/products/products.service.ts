@@ -36,9 +36,7 @@ export class ProductsService {
       (createProductDto.latitude && !createProductDto.longitude) ||
       (!createProductDto.latitude && createProductDto.longitude)
     ) {
-      throw new BadRequestException(
-        '위도와 경도는 함께 제공되어야 합니다',
-      );
+      throw new BadRequestException('위도와 경도는 함께 제공되어야 합니다');
     }
 
     // 상품 생성
@@ -118,9 +116,7 @@ export class ProductsService {
    * @param searchDto 검색 조건
    * @returns 검색 결과
    */
-  async search(
-    searchDto: SearchProductDto,
-  ): Promise<ProductListResponseDto> {
+  async search(searchDto: SearchProductDto): Promise<ProductListResponseDto> {
     const { page = 1, limit = 20 } = searchDto;
     const skip = (page - 1) * limit;
 
@@ -269,9 +265,7 @@ export class ProductsService {
       (updateProductDto.latitude && !updateProductDto.longitude) ||
       (!updateProductDto.latitude && updateProductDto.longitude)
     ) {
-      throw new BadRequestException(
-        '위도와 경도는 함께 제공되어야 합니다',
-      );
+      throw new BadRequestException('위도와 경도는 함께 제공되어야 합니다');
     }
 
     // 상품 정보 수정
@@ -367,5 +361,18 @@ export class ProductsService {
       limit,
       totalPages: Math.ceil(total / limit),
     };
+  }
+
+  /**
+   * 상품 존재 유무 확인
+   * @param productId 상품 아이디
+   * @throws NotFoundException - 상품을 찾을 수 없는 경우
+   */
+  async ensureProductExists(productId: string): Promise<void> {
+    const product = await this.productsRepository.findById(productId);
+
+    if (!product) {
+      throw new NotFoundException('상품을 찾을 수 없습니다');
+    }
   }
 }
