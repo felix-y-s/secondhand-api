@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { DeleteResult, Model } from 'mongoose';
 import { ProductDetail } from './schemas/product-detail.schema';
@@ -9,13 +9,47 @@ import { Message } from '@/modules/messages-mongo/schemas';
  * ProductDetail과 Message 스키마에 대한 CRUD 작업
  */
 @Injectable()
-export class MongodbService {
+export class MongodbService implements OnModuleInit {
+  private readonly logger = new Logger(MongodbService.name);
+
   constructor(
     @InjectModel(ProductDetail.name)
     private productDetailModel: Model<ProductDetail>,
     @InjectModel(Message.name)
     private messageModel: Model<Message>,
   ) {}
+
+  /**
+   * 모듈 초기화 시 MongoDB 연결 이벤트 리스너 등록
+   */
+  onModuleInit() {
+    const db = this.productDetailModel.db;
+
+    // 연결 성공
+    db.on('connected', () => {
+      this.logger.log('✅ MongoDB 연결 성공');
+    });
+
+    // 연결 에러
+    db.on('error', (error) => {
+      this.logger.error('❌ MongoDB 연결 에러:', error);
+    });
+
+    // 연결 끊김
+    db.on('disconnected', () => {
+      this.logger.warn('⚠️ MongoDB 연결 끊김');
+    });
+
+    // 재연결 중
+    db.on('reconnected', () => {
+      this.logger.log('🔄 MongoDB 재연결 성공');
+    });
+
+    // 연결 풀 고갈 경고 (Mongoose 6.0+)
+    db.on('timeout', () => {
+      this.logger.error('⏱️ MongoDB 연결 타임아웃 - 연결 풀이 부족할 수 있습니다');
+    });
+  }
 
   /**
    * MongoDB 연결 상태 확인

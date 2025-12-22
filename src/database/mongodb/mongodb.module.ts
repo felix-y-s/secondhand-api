@@ -24,6 +24,14 @@ import { MongodbService } from './mongodb.service';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         uri: configService.get<string>('database.mongodb.uri'),
+        // 연결 풀 설정 (동시성 테스트 대응)
+        maxPoolSize: 20, // 최대 연결 수 (기본값: 10)
+        minPoolSize: 5, // 최소 연결 수 (기본값: 0)
+        serverSelectionTimeoutMS: 5000, // 서버 선택 타임아웃
+        socketTimeoutMS: 45000, // 소켓 타임아웃
+        // 연결 에러 핸들링
+        retryWrites: true, // 쓰기 실패 시 자동 재시도
+        retryReads: true, // 읽기 실패 시 자동 재시도
       }),
     }),
     MongooseModule.forFeature([
