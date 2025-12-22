@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
+import { ErrorDetail } from '../dto/error-response.dto';
 
 /**
  * HTTP 예외 필터
@@ -23,43 +24,49 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     // 기본 에러 응답 구조
+    const errorDetail: ErrorDetail = {
+      code: 'INTERNAL_SERVER_ERROR',
+      message: 'Internal server error',
+    };
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = 'Internal server error';
-    let errors: any = undefined;
 
     // 1. HttpException 처리
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
+      errorDetail.code = exception.name;
 
       if (typeof exceptionResponse === 'string') {
-        message = exceptionResponse;
+        errorDetail.message = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
         const responseObj = exceptionResponse as any;
-        message = responseObj.message || exception.message;
-        errors = responseObj.errors || responseObj.error;
+        errorDetail.message = responseObj.message || exception.message;
+        errorDetail.details = responseObj.errors || responseObj.error;
       }
     }
     // 2. Prisma 에러 처리
     else if (exception instanceof Prisma.PrismaClientKnownRequestError) {
       const prismaError = this.handlePrismaError(exception);
       status = prismaError.status;
-      message = prismaError.message;
+      errorDetail.message = prismaError.message;
+      errorDetail.code = exception.code;
     }
     // 3. Prisma Validation 에러 처리
     else if (exception instanceof Prisma.PrismaClientValidationError) {
       status = HttpStatus.BAD_REQUEST;
-      message = '데이터 유효성 검사 실패';
+      errorDetail.message = '데이터 유효성 검사 실패';
+      errorDetail.code = 'PRISMA_VALIDATION_ERROR';
     }
     // 4. 기타 에러 처리
     else if (exception instanceof Error) {
-      message = exception.message;
+      errorDetail.message = exception.message;
+      errorDetail.code = exception.name;
     }
 
     // 에러 로깅
     const cause = exception instanceof Error ? exception.cause : undefined;
     this.logger.error(
-      `${request.method} ${request.url} - Status: ${status} - Message: ${message}`,
+      `${request.method} ${request.path} - Status: ${status} - Message: ${errorDetail.message}`,
       cause ? JSON.stringify(cause) : '',
       exception instanceof Error ? exception.stack : '',
     );
@@ -68,11 +75,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     response.status(status).json({
       success: false,
       statusCode: status,
-      error: {
-        message,
-        ...(errors && { details: errors }),
-      },
+      error: errorDetail,
       timestamp: new Date().toISOString(),
+      path: request.path,
     });
   }
 

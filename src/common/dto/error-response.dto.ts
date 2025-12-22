@@ -1,11 +1,48 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
- * 에러 응답 DTO
+ * 에러 상세 정보 (중첩 객체)
+ */
+export class ErrorDetail {
+  @ApiProperty({
+    description: '에러 코드 (기계가 읽을 수 있는 식별자)',
+    example: 'VALIDATION_ERROR',
+  })
+  code: string;
+
+  @ApiProperty({
+    description: '에러 메시지 (사용자에게 표시할 메시지)',
+    oneOf: [
+      { type: 'string', example: '잘못된 요청입니다' },
+      {
+        type: 'array',
+        items: { type: 'string' },
+        example: ['이메일은 필수입니다', '비밀번호는 8자 이상이어야 합니다'],
+      },
+    ],
+  })
+  message: string | string[];
+
+  @ApiProperty({
+    description: '추가 에러 상세 정보',
+    required: false,
+    example: 'Bad Request',
+  })
+  details?: string | any;
+}
+
+/**
+ * 표준 에러 응답 DTO (Google/Microsoft 스타일)
  *
- * API 에러 발생 시 표준 응답 포맷
+ * 중첩 구조로 확장성과 명확성을 확보
  */
 export class ErrorResponseDto {
+  @ApiProperty({
+    description: '성공 여부',
+    example: false,
+  })
+  success: boolean;
+
   @ApiProperty({
     description: 'HTTP 상태 코드',
     example: 400,
@@ -13,61 +50,79 @@ export class ErrorResponseDto {
   statusCode: number;
 
   @ApiProperty({
-    description: '에러 메시지',
-    example: '잘못된 요청입니다',
+    description: '에러 정보 객체',
+    type: ErrorDetail,
   })
-  message: string;
+  error: ErrorDetail;
 
   @ApiProperty({
-    description: '에러 코드',
-    example: 'BAD_REQUEST',
-  })
-  error: string;
-
-  @ApiProperty({
-    description: '타임스탬프',
-    example: '2025-10-17T10:30:00Z',
+    description: '타임스탬프 (ISO 8601)',
+    example: '2025-12-18T10:30:00Z',
   })
   timestamp: string;
 
   @ApiProperty({
     description: '요청 경로',
     example: '/api/v1/users',
+    required: false,
   })
-  path: string;
+  path?: string;
 }
 
 /**
  * Validation 에러 응답 DTO
  *
- * 요청 데이터 검증 실패 시 응답 포맷
+ * ValidationPipe에서 발생하는 에러 (message가 배열)
  */
-export class ValidationErrorResponseDto extends ErrorResponseDto {
+export class ValidationErrorResponseDto {
   @ApiProperty({
-    description: 'Validation 에러 상세 정보',
-    example: [
-      {
-        field: 'email',
-        message: '이메일 형식이 올바르지 않습니다',
-      },
-      {
-        field: 'password',
-        message: '비밀번호는 8자 이상이어야 합니다',
-      },
-    ],
+    description: '성공 여부',
+    example: false,
   })
-  details: Array<{
-    field: string;
-    message: string;
-  }>;
+  success: boolean;
+
+  @ApiProperty({
+    description: 'HTTP 상태 코드',
+    example: 400,
+  })
+  statusCode: number;
+
+  @ApiProperty({
+    description: '에러 정보 객체',
+    example: {
+      code: 'VALIDATION_ERROR',
+      message: ['이메일은 필수입니다', '비밀번호는 8자 이상이어야 합니다'],
+      details: 'Bad Request',
+    },
+  })
+  error: ErrorDetail;
+
+  @ApiProperty({
+    description: '타임스탬프 (ISO 8601)',
+    example: '2025-12-18T10:30:00Z',
+  })
+  timestamp: string;
+
+  @ApiProperty({
+    description: '요청 경로',
+    example: '/api/v1/users',
+    required: false,
+  })
+  path?: string;
 }
 
 /**
  * Unauthorized 에러 응답 DTO
  *
- * 인증 실패 시 응답 포맷
+ * 인증 실패 시 응답 (401)
  */
 export class UnauthorizedErrorResponseDto {
+  @ApiProperty({
+    description: '성공 여부',
+    example: false,
+  })
+  success: boolean;
+
   @ApiProperty({
     description: 'HTTP 상태 코드',
     example: 401,
@@ -75,24 +130,41 @@ export class UnauthorizedErrorResponseDto {
   statusCode: number;
 
   @ApiProperty({
-    description: '에러 메시지',
-    example: '인증이 필요합니다',
+    description: '에러 정보 객체',
+    example: {
+      code: 'UNAUTHORIZED',
+      message: '인증이 필요합니다',
+      details: 'Unauthorized',
+    },
   })
-  message: string;
+  error: ErrorDetail;
 
   @ApiProperty({
-    description: '에러 코드',
-    example: 'UNAUTHORIZED',
+    description: '타임스탬프 (ISO 8601)',
+    example: '2025-12-18T10:30:00Z',
   })
-  error: string;
+  timestamp: string;
+
+  @ApiProperty({
+    description: '요청 경로',
+    example: '/api/v1/auth/login',
+    required: false,
+  })
+  path?: string;
 }
 
 /**
  * Forbidden 에러 응답 DTO
  *
- * 권한 부족 시 응답 포맷
+ * 권한 부족 시 응답 (403)
  */
 export class ForbiddenErrorResponseDto {
+  @ApiProperty({
+    description: '성공 여부',
+    example: false,
+  })
+  success: boolean;
+
   @ApiProperty({
     description: 'HTTP 상태 코드',
     example: 403,
@@ -100,24 +172,41 @@ export class ForbiddenErrorResponseDto {
   statusCode: number;
 
   @ApiProperty({
-    description: '에러 메시지',
-    example: '접근 권한이 없습니다',
+    description: '에러 정보 객체',
+    example: {
+      code: 'FORBIDDEN',
+      message: '접근 권한이 없습니다',
+      details: 'Forbidden',
+    },
   })
-  message: string;
+  error: ErrorDetail;
 
   @ApiProperty({
-    description: '에러 코드',
-    example: 'FORBIDDEN',
+    description: '타임스탬프 (ISO 8601)',
+    example: '2025-12-18T10:30:00Z',
   })
-  error: string;
+  timestamp: string;
+
+  @ApiProperty({
+    description: '요청 경로',
+    example: '/api/v1/admin/users',
+    required: false,
+  })
+  path?: string;
 }
 
 /**
  * Rate Limit 에러 응답 DTO
  *
- * Rate Limiting 초과 시 응답 포맷
+ * Rate Limiting 초과 시 응답 (429)
  */
 export class RateLimitErrorResponseDto {
+  @ApiProperty({
+    description: '성공 여부',
+    example: false,
+  })
+  success: boolean;
+
   @ApiProperty({
     description: 'HTTP 상태 코드',
     example: 429,
@@ -125,16 +214,20 @@ export class RateLimitErrorResponseDto {
   statusCode: number;
 
   @ApiProperty({
-    description: '에러 메시지',
-    example: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+    description: '에러 정보 객체',
+    example: {
+      code: 'TOO_MANY_REQUESTS',
+      message: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.',
+      details: 'Too Many Requests',
+    },
   })
-  message: string;
+  error: ErrorDetail;
 
   @ApiProperty({
-    description: '에러 코드',
-    example: 'TOO_MANY_REQUESTS',
+    description: '타임스탬프 (ISO 8601)',
+    example: '2025-12-18T10:30:00Z',
   })
-  error: string;
+  timestamp: string;
 
   @ApiProperty({
     description: '재시도 가능 시간 (초)',
@@ -142,4 +235,11 @@ export class RateLimitErrorResponseDto {
     required: false,
   })
   retryAfter?: number;
+
+  @ApiProperty({
+    description: '요청 경로',
+    example: '/api/v1/products',
+    required: false,
+  })
+  path?: string;
 }

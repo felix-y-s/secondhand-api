@@ -1,9 +1,46 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { PaginationMeta } from '../types';
+import { PaginationMeta, Response } from '../types';
 import { plainToInstance } from 'class-transformer';
 
 /**
+ * 응답 DTO 사용 가이드
+ *
+ * 일반적으로 응답 래핑은 TransformInterceptor가 자동으로 처리하므로 DTO 클래스는 불필요합니다.
+ * 다음 경우에만 응답 DTO 클래스를 사용하세요:
+ *
+ * 1. 필드 제외/변환이 필요한 경우 (class-transformer 데코레이터 사용)
+ *    - @Exclude(): 응답에서 특정 필드 제외 (예: password)
+ *    - @Expose(): 특정 필드만 노출
+ *    - @Transform(): 필드 값 변환 (예: 대문자 변환, 날짜 포맷)
+ *    - ClassSerializerInterceptor와 함께 사용
+ *
+ * 2. Swagger 문서화가 필요한 경우
+ *    - ⚠️ 하지만 커스텀 데코레이터(@ApiSuccessResponse)를 사용하는 것이 더 권장됨
+ *
+ * @example
+ * // 응답 DTO 사용 예시
+ * export class UserResponseDto {
+ *   @Expose() id: string;
+ *   @Expose() email: string;
+ *   @Exclude() password: string; // 응답에서 제외
+ *   @Transform(({ value }) => value.toUpperCase())
+ *   name: string;
+ * }
+ *
+ * @Controller('users')
+ * export class UserController {
+ *   @Get()
+ *   @UseInterceptors(ClassSerializerInterceptor)
+ *   async getUsers(): Promise<UserResponseDto[]> {
+ *     const users = await this.service.getUsers();
+ *     return users.map(user => plainToClass(UserResponseDto, user));
+ *   }
+ * }
+ */
+
+/**
  * 페이지네이션 메타데이터
+ * TODO: swagger 데코레이터로 전환 필요, 아래 응답 dto 클래스 모두 해당
  */
 export class PaginationMetaDto implements PaginationMeta {
   @ApiProperty({ description: '전체 항목 수', example: 100 })
@@ -44,9 +81,12 @@ export class PaginationMetaDto implements PaginationMeta {
  *
  * 모든 API 응답은 이 형식을 따릅니다
  */
-export class ResponseDto<T> {
+export class ResponseDto<T> implements Response<T> {
   @ApiProperty({ description: '성공 여부', example: true })
   success: boolean;
+
+  @ApiProperty({ description: 'HTTP 상태 코드', example: 200 })
+  statusCode: number;
 
   @ApiPropertyOptional({
     description: '응답 메시지',
@@ -70,8 +110,15 @@ export class ResponseDto<T> {
   })
   timestamp?: string;
 
-  constructor(success: boolean, data?: T, message?: string, error?: any) {
+  constructor(
+    success: boolean,
+    statusCode: number,
+    data?: T,
+    message?: string,
+    error?: any,
+  ) {
     this.success = success;
+    this.statusCode = statusCode;
     this.data = data;
     this.message = message;
     this.error = error;
@@ -81,8 +128,12 @@ export class ResponseDto<T> {
   /**
    * 성공 응답 생성
    */
-  static success<T>(data?: T, message?: string): ResponseDto<T> {
-    return new ResponseDto(true, data, message);
+  static success<T>(
+    data?: T,
+    statusCode: number = 200,
+    message?: string,
+  ): ResponseDto<T> {
+    return new ResponseDto(true, statusCode, data, message);
   }
 
   /**
@@ -90,9 +141,10 @@ export class ResponseDto<T> {
    */
   static error<T = any>(
     error: { code: string; message: string; details?: any },
+    statusCode: number = 500,
     message?: string,
   ): ResponseDto<T> {
-    return new ResponseDto(false, undefined as T, message, error);
+    return new ResponseDto(false, statusCode, undefined as T, message, error);
   }
 }
 
@@ -104,7 +156,8 @@ export class PaginatedResponseDto<T> extends ResponseDto<T[]> {
   meta: PaginationMetaDto;
 
   constructor(data: T[], meta: PaginationMetaDto, message?: string) {
-    super(true, data, message);
+    const statusCode = 200;
+    super(true, statusCode, data, message);
     this.meta = meta;
   }
 
@@ -140,7 +193,8 @@ export class CursorPaginatedResponseDto<T> extends ResponseDto<T[]> {
     hasNextPage: boolean,
     message?: string,
   ) {
-    super(true, data, message);
+    const statusCode = 200;
+    super(true, statusCode, data, message);
     this.nextCursor = nextCursor;
     this.hasNextPage = hasNextPage;
   }

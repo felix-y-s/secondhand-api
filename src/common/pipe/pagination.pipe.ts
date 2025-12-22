@@ -18,7 +18,7 @@ export class PaginationPipe
     return {
       page: value.page ?? 1,
       limit: value.limit ?? 10,
-      sortBy: value.sortBy ?? 'createdAt',
+      sortBy: value.sortBy ?? 'updatedAt',
       sortOrder: value.sortOrder ?? 'DESC',
     };
   }
