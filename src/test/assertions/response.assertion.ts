@@ -5,7 +5,7 @@
  * @param assertData - data 필드 검증 함수 (선택)
  * @param expectedStatusCode - 기대되는 상태 코드 (기본: 200)
  */
-export function expectSuccessResponse<T>(
+export function expectSuccessResponse<T = any>(
   body: any,
   assertData?: (data: T) => void,
   expectedStatusCode = 200,
@@ -14,6 +14,7 @@ export function expectSuccessResponse<T>(
     success: true,
     statusCode: expectedStatusCode,
     timestamp: expect.any(String),
+    path: expect.any(String),
   });
 
   expectValidTimestamp(body.timestamp);
@@ -26,7 +27,7 @@ export function expectSuccessResponse<T>(
 /**
  * 201 Created 응답 검증 헬퍼
  */
-export function expectCreatedResponse<T>(
+export function expectCreatedResponse<T = any>(
   body: any,
   assertData?: (data: T) => void,
 ) {

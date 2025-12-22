@@ -1,4 +1,7 @@
-import { ErrorResponseDto, ValidationErrorResponseDto } from '@/common/dto/error-response.dto';
+import {
+  ErrorResponseDto,
+  ValidationErrorResponseDto,
+} from '@/common/dto/error-response.dto';
 import { expectValidTimestamp } from './response.assertion';
 
 /**
@@ -9,7 +12,7 @@ import { expectValidTimestamp } from './response.assertion';
  */
 export function expectUnauthorizedError(
   body: any,
-  expectedMessage?: string,
+  expectedMessage?: string | string[],
 ) {
   expect(body).toMatchObject({
     success: false,
@@ -18,10 +21,17 @@ export function expectUnauthorizedError(
       message: expect.any(String),
     },
     timestamp: expect.any(String),
+    path: expect.any(String),
   });
 
   if (expectedMessage) {
-    expect(body.error.message).toContain(expectedMessage);
+    if (Array.isArray(expectedMessage)) {
+      expectedMessage.forEach((message) => {
+        expect(body.error.message).toContain(message);
+      });
+    } else {
+      expect(body.error.message).toContain(expectedMessage);
+    }
   }
 
   expectValidTimestamp(body.timestamp);
@@ -38,19 +48,30 @@ export function expectUnauthorizedError(
  */
 export function expectBadRequestError(
   body: any,
-  expectedMessage?: string,
+  expectedMessage?: string | string[],
 ) {
   expect(body).toMatchObject({
     success: false,
     statusCode: 400,
     error: {
-      message: expect.any(String),
+      message: expect.anything(), // 존재만 보장
     },
     timestamp: expect.any(String),
+    path: expect.any(String),
   });
 
   if (expectedMessage) {
-    expect(body.error.message).toContain(expectedMessage);
+    const actualMessages = Array.isArray(body.error.message)
+      ? body.error.message
+      : [body.error.message];
+
+    const expectedMessages = Array.isArray(expectedMessage)
+      ? expectedMessage
+      : [expectedMessage];
+
+    expectedMessages.forEach((msg) => {
+      expect(actualMessages).toContain(msg);
+    });
   }
 
   expectValidTimestamp(body.timestamp);

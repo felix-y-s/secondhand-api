@@ -25,10 +25,11 @@ export class TestDataFactory {
     overrides: Partial<{ name: string; slug: string }> = {},
   ) {
     const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
     return await this.prisma.category.create({
       data: {
-        name: overrides.name || `카테고리-${timestamp}`,
-        slug: overrides.slug || `category-${timestamp}`,
+        name: overrides.name || `카테고리-${timestamp}-${random}`,
+        slug: overrides.slug || `category-${timestamp}-${random}`,
         icon: '📦',
         order: 0,
       },
@@ -47,34 +48,47 @@ export class TestDataFactory {
       role: Role;
       isActive: boolean;
     }> = {},
-    takeToken: boolean = true,
   ) {
     const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
     const password = overrides.password || 'Test1234!';
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await this.prisma.user.create({
       data: {
-        email: overrides.email || `user-${timestamp}@test.com`,
+        email: overrides.email || `user-${timestamp}-${random}@test.com`,
         password: hashedPassword,
-        nickname: overrides.nickname || `user-${timestamp}`,
+        nickname: overrides.nickname || `user-${timestamp}-${random}`,
         role: overrides.role || Role.USER,
         isActive: overrides.isActive !== undefined ? overrides.isActive : true,
       },
     });
 
-    let token: string | null = null;
-    if (takeToken) {
-      token = await this.createAccessToken({
-        sub: user.id,
-        email: user.email,
-        role: user.role,
-      });
-    }
+    return user;
+  }
+
+  /**
+   * 기본 사용자 + Token 생성
+   */
+  async createUserWithToken(
+    overrides: Partial<{
+      email: string;
+      password: string;
+      nickname: string;
+      role: Role;
+      isActive: boolean;
+    }> = {},
+  ) {
+    const user = await this.createUser(overrides);
+    const token = await this.createAccessToken({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
     return {
-      ...user,
-      ...(takeToken ? { token } : {}),
+      user,
+      token,
     };
   }
 
@@ -95,6 +109,25 @@ export class TestDataFactory {
     });
 
     return { seller, buyer };
+  }
+
+  async createSellerAndBuyerWithToken() {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7); // 랜덤 문자열 추가
+
+    const { user: seller, token: sellerToken } = await this.createUserWithToken(
+      {
+        email: `seller-${timestamp}-${random}@test.com`,
+        nickname: `seller-${timestamp}-${random}`,
+      },
+    );
+
+    const { user: buyer, token: buyerToken } = await this.createUserWithToken({
+      email: `buyer-${timestamp}-${random}-2@test.com`,
+      nickname: `buyer-${timestamp}-${random}-2`,
+    });
+
+    return { seller, buyer, sellerToken, buyerToken };
   }
 
   /**
