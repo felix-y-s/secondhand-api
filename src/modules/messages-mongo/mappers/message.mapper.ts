@@ -9,7 +9,7 @@ export class MessageMapper {
       conversationId: doc.conversationId,
       senderId: doc.senderId,
       receiverId: doc.receiverId,
-      content: doc.message,
+      message: doc.message,
       messageType: doc.messageType,
       readAt: doc.readAt || null,
       fileUrl: doc.fileUrl,

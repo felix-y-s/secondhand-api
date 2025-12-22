@@ -6,7 +6,6 @@ import { ApiGetResponses } from '@/common/decorators';
 import { AddFavoriteDto } from './dto/add-favorite.dto';
 import { QueryFavoritesDto } from './dto/query-favorites.dto';
 import { FavoritesListResponseDto, FavoriteItemDto } from './dto/favorite-response.dto';
-import { ResponseDto } from '@/common/dto/response.dto';
 import { plainToInstance } from 'class-transformer';
 import { existFavoriteDto } from './dto/exist-favorite.dto';
 import { DeleteFavoriteDto } from './dto/delete-favorite.dto';

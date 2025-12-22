@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { ClientSession, Model, Types } from 'mongoose';
 import { ChatRoomEntity } from '../domain/entities/chat-room.entity';
 import { ChatRoomMapper } from '../mappers/chat-room.mapper';
+import { PaginationUtil } from '@/common/utils';
 
 @Injectable()
 export class ChatRoomRepositoryMongo {
@@ -73,18 +74,40 @@ export class ChatRoomRepositoryMongo {
    */
   async findChatRoomsByUserId(
     userId: string,
-    pagenation: Required<PaginationOptions>,
+    pagination: Required<PaginationOptions>,
   ) {
-    const skip = (pagenation.page - 1) * pagenation.limit;
-    const chatRooms = await this.chatRoomModel
-      .find({
-        'participants.userId': userId,
-      })
-      .skip(skip)
-      .limit(pagenation.limit)
-      .sort({ createdAt: -1 })
-      .exec();
-    return this.mapper.toEntities(chatRooms);
+    const skip = (pagination.page - 1) * pagination.limit;
+
+    // 정렬 방향: 1 (오름차순), -1 (내림차순)
+    const sortDirection = pagination.sortOrder === 'ASC' ? 1 : -1;
+
+    // 동적 필드명으로 정렬 객체 생성
+    const sort: Record<string, 1 | -1> = {
+      [pagination.sortBy]: sortDirection as 1 | -1,
+    };
+
+    const [chatRooms, total] = await Promise.all([
+      this.chatRoomModel
+        .find({
+          'participants.userId': userId,
+        })
+        .skip(skip)
+        .limit(pagination.limit)
+        .sort(sort)
+        .exec(),
+      this.chatRoomModel
+        .countDocuments({
+          'participants.userId': userId,
+        })
+        .exec(),
+    ]);
+
+    const entities = this.mapper.toEntities(chatRooms);
+
+    return PaginationUtil.paginate<ChatRoomEntity>(entities, total, {
+      page: pagination.page,
+      limit: pagination.limit,
+    });
   }
 
   /**
@@ -107,16 +130,22 @@ export class ChatRoomRepositoryMongo {
   }
 
   /**
-   * 대화방 updatedAt 갱신
+   * 업데이트 lastMessage
+   * - updatedAt 자동 갱신
    * - 새 메시지 전송 시 대화방 목록 정렬을 위해 사용
    */
-  async updateChatRoomTimestamp(chatRoomId: string): Promise<void> {
-    await this.chatRoomModel
-      .updateOne(
-        { _id: new Types.ObjectId(chatRoomId) },
-        { $set: { updatedAt: new Date() } },
-      )
-      .exec();
+  async updateLastMessage(
+    chatRoomId: string,
+    {
+      lastMessage,
+      lastMessageId,
+    }: { lastMessage: string; lastMessageId: string },
+  ) {
+    const lastMessageAt = new Date();
+    await this.chatRoomModel.updateOne(
+      { _id: new Types.ObjectId(chatRoomId) },
+      { $set: { lastMessage, lastMessageId, lastMessageAt } },
+    );
   }
 
   /**
@@ -150,13 +179,10 @@ export class ChatRoomRepositoryMongo {
       },
     };
 
-    const query = this.chatRoomModel.updateOne(
-      queryCondition,
-      {
-        $set: { 'participants.$.leftAt': new Date() },
-        $inc: { participantsCount: -1 },
-      },
-    );
+    const query = this.chatRoomModel.updateOne(queryCondition, {
+      $set: { 'participants.$.leftAt': new Date() },
+      $inc: { participantsCount: -1 },
+    });
 
     if (session) query.session(session);
 

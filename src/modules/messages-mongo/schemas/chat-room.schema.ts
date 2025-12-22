@@ -4,8 +4,8 @@ import { Document, Types } from 'mongoose';
 @Schema({ collection: 'chat_rooms', timestamps: true })
 export class ChatRoom extends Document {
   @Prop()
-  productId: string;
-  
+  productId: string; // FIXME: relatedProductId 로 변수명 변경
+
   @Prop({
     type: [
       {

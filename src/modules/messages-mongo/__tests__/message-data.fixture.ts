@@ -1,6 +1,6 @@
 import { PrismaService } from '@/prisma/prisma.service';
 import { TestDataFactory } from '../../../test/fixtures/test-data.factory';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { ChatRoom, Message } from '@/modules/messages-mongo/schemas';
 import { MessageType } from '@/modules/messages-mongo/domain/enums/message-type.enum';
 import { JwtService } from '@nestjs/jwt';
@@ -13,6 +13,7 @@ interface MessageDataFixtureDeps {
   chatRoomModel?: Model<ChatRoom>;
   messageModel?: Model<Message>;
 }
+
 /**
  * 📝 fixture, context의 의미
  *
@@ -33,16 +34,21 @@ export class MessageDataFixture {
   private chatRoomModel?: Model<ChatRoom>;
   private messageModel?: Model<Message>;
 
-  static async create(deps: MessageDataFixtureDeps) {
-    const instance = new MessageDataFixture();
-    instance.testDataFactory = new TestDataFactory(
+  constructor(deps: MessageDataFixtureDeps) {
+    this.testDataFactory = new TestDataFactory(
       deps.prismaService,
       deps.configService,
       deps.jwtService,
     );
-    instance.chatRoomModel = deps.chatRoomModel;
-    instance.messageModel = deps.messageModel;
-    return instance;
+    this.chatRoomModel = deps.chatRoomModel;
+    this.messageModel = deps.messageModel;
+  }
+
+  /**
+   * @deprecated
+   */
+  static create(deps: MessageDataFixtureDeps) {
+    throw new Error('MessageDataFixture.create는 더 이상 사용되지 않습니다.');
   }
 
   async createChatTestContext() {
@@ -67,9 +73,10 @@ export class MessageDataFixture {
 
   async createAuthenticatedChatTestContext() {
     // 수/발신인 만들기
-    const { seller, buyer } = await this.testDataFactory.createSellerAndBuyer();
+    const { seller, buyer, sellerToken, buyerToken } =
+      await this.testDataFactory.createSellerAndBuyerWithToken();
 
-    if (!seller.token || !buyer.token) {
+    if (!sellerToken || !buyerToken) {
       throw new Error('토큰 발생 실패');
     }
 
@@ -84,28 +91,34 @@ export class MessageDataFixture {
 
     return {
       senderId: buyer.id,
-      senderToken: buyer.token,
+      senderToken: buyerToken,
       receiverId: seller.id,
-      receiverToken: seller.token,
+      receiverToken: sellerToken,
       productId: product.id,
     };
+  }
+
+  async createUsersForChatRoomTest(userCount: number = 1) {
+    const users: { userId: string; token: string }[] = await Promise.all(
+      Array.from({ length: userCount }).map(async (_, index) => {
+        const context = await this.testDataFactory.createUserWithToken();
+        return { userId: context.user.id, token: context.token };
+      }),
+    );
+    return users;
   }
 
   /**
    * 테스트용 대화방 생성 (MongoDB에 직접 삽입)
    */
-  private async createChatRoom(
+  async createChatRoomFixture(
     senderId: string,
     receiverId: string,
     productId: string,
   ): Promise<ChatRoom> {
-    if (!this.chatRoomModel) {
-      throw new Error(
-        'ChatRoomModel이 주입되지 않았습니다. create() 메서드에 chatRoomModel을 전달해주세요.',
-      );
-    }
+    const chatRoomModel = this.ensureChatRoomModel();
 
-    const chatRoom = new this.chatRoomModel({
+    const chatRoom = new chatRoomModel({
       productId,
       participants: [
         { userId: senderId, joinedAt: new Date() },
@@ -117,30 +130,55 @@ export class MessageDataFixture {
     return await chatRoom.save();
   }
 
-  async createChatRoomFixture() {
-    const { senderId, receiverId, productId } =
-      await this.createChatTestContext();
-    const chatRoom = await this.createChatRoom(senderId, receiverId, productId);
+  /**
+   * 테스트 데이터 + 대화방 + 메시지 한 번에 생성
+   */
+  async createChatRoomWithMessagesFixture(
+    senderId: string,
+    receiverId: string,
+    productId: string,
+    options?: { messageCount?: number },
+  ) {
+    const chatRoom = await this.createChatRoomFixture(
+      senderId,
+      receiverId,
+      productId,
+    );
+
+    const messages = await this.createMessagesFixture(
+      senderId,
+      receiverId,
+      chatRoom.id,
+      options,
+    );
 
     return {
       senderId,
       receiverId,
       productId,
       chatRoom,
+      messages,
     };
   }
 
   /**
-   * 테스트 데이터 + 대화방 한 번에 생성
+   * 테스트 대화 생성
+   * @param params
+   * @param messageCount
+   * @returns
    */
-  async createChatRoomWithMessagesFixture(messageCount: number) {
-    const messageModel = this.messageModel;
-    if (!messageModel) {
-      throw new Error('messageModel이 주입되지 않았습니다.');
-    }
+  async createMessagesFixture(
+    senderId: string,
+    receiverId: string,
+    chatRoomId: string,
+    options?: { messageCount?: number },
+  ) {
+    const messageModel = this.ensureMessageModel();
+    const { messageCount = 1 } = options ?? {};
 
-    const { senderId, receiverId, productId, chatRoom } =
-      await this.createChatRoomFixture();
+    if (messageCount < 1) {
+      throw new Error('messageCount는 1 이상이어야 합니다.');
+    }
 
     const newMessages = await Promise.all(
       Array.from({ length: messageCount }).map(async (_, index) => {
@@ -154,43 +192,87 @@ export class MessageDataFixture {
           ),
         );
         return messageModel.insertOne({
-          conversationId: chatRoom.id,
-          senderId,
-          receiverId,
+          conversationId: chatRoomId,
+          senderId: senderId,
+          receiverId: receiverId,
           message: `테스트 메시지 _${index}`,
           messageType: MessageType.TEXT,
         });
       }),
     );
 
-    return {
-      senderId,
-      receiverId,
-      productId,
-      chatRoom,
-      messages: newMessages,
-    };
+    return newMessages;
   }
 
   /**
-   * 테스트 데이터 + 대화방 한 번에 생성
+   * 테스트 데이터 + token + 대화방 한 번에 생성
    */
   async createAuthenticatedChatRoomContext() {
-    const result = await this.createAuthenticatedChatTestContext();
-    const chatRoom = await this.createChatRoom(
-      result.senderId,
-      result.receiverId,
-      result.productId,
+    const context = await this.createAuthenticatedChatTestContext();
+    const chatRoom = await this.createChatRoomFixture(
+      context.senderId,
+      context.receiverId,
+      context.productId,
     );
 
     return {
-      senderId: result.senderId,
-      senderToken: result.senderToken,
-      receiverId: result.receiverId,
-      receiverToken: result.receiverToken,
-      productId: result.productId,
+      senderId: context.senderId,
+      senderToken: context.senderToken,
+      receiverId: context.receiverId,
+      receiverToken: context.receiverToken,
+      productId: context.productId,
       chatRoomId: chatRoom.id,
     };
+  }
+  /**
+   * 테스트 데이터 + 대화방 한 번에 생성
+   */
+  async createChatRoomContext() {
+    const context = await this.createChatTestContext();
+    const chatRoom = await this.createChatRoomFixture(
+      context.senderId,
+      context.receiverId,
+      context.productId,
+    );
+
+    return {
+      senderId: context.senderId,
+      receiverId: context.receiverId,
+      productId: context.productId,
+      chatRoomId: chatRoom.id,
+    };
+  }
+
+  async deleteChatRoomFixture(chatRoomId: string): Promise<void> {
+    const chatRoomModel = this.ensureChatRoomModel();
+    await chatRoomModel.deleteOne({
+      _id: new Types.ObjectId(chatRoomId),
+    });
+  }
+
+  async deleteMessageFixture(chatRoomId: string): Promise<void> {
+    const messageModel = this.ensureMessageModel();
+    await messageModel.deleteMany({ conversationId: chatRoomId });
+  }
+
+  /**
+   * ChatRoomModel 존재 보장
+   */
+  private ensureChatRoomModel(): Model<ChatRoom> {
+    if (!this.chatRoomModel) {
+      throw new Error('chatRoomModel이 주입되지 않았습니다.');
+    }
+    return this.chatRoomModel;
+  }
+
+  /**
+   * MessageModel 존재 보장
+   */
+  private ensureMessageModel(): Model<Message> {
+    if (!this.messageModel) {
+      throw new Error('messageModel이 주입되지 않았습니다.');
+    }
+    return this.messageModel;
   }
 
   async cleanupAll() {

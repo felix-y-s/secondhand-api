@@ -5,7 +5,7 @@ export class MessageEntity {
   conversationId: string;
   senderId: string;
   receiverId: string;
-  content: string;
+  message: string;
   messageType: MessageType;
   readAt: Date | null;
   fileUrl: string;

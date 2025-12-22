@@ -1,4 +1,8 @@
-import { INestApplication, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  INestApplication,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import { getModelToken } from '@nestjs/mongoose';
@@ -47,7 +51,7 @@ describe('MessagesMongoService 통합 테스트', () => {
     messageModel = app.get<Model<Message>>(getModelToken(Message.name));
 
     // 5. 테스트 데이터 팩토리 생성 (ChatRoomModel 포함)
-    testMessageDataFactory = await MessageDataFixture.create({
+    testMessageDataFactory = new MessageDataFixture({
       prismaService,
       chatRoomModel,
       messageModel,
@@ -77,7 +81,7 @@ describe('MessagesMongoService 통합 테스트', () => {
   describe('대화방 찾기 & 만들기', () => {
     it('새로운 대화방 만들기', async () => {
       // 대화방 만들기
-      const createdRoom = await service.findOrCreateChatroom(
+      const { chatRoom: createdRoom } = await service.findOrCreateChatroom(
         senderId,
         receiverId,
         productId,
@@ -88,12 +92,12 @@ describe('MessagesMongoService 통합 테스트', () => {
     });
     it('기존 대화방 조회', async () => {
       // Given: 대화방 만들기
-      const { senderId, receiverId, productId, chatRoom } =
-        await testMessageDataFactory.createChatRoomFixture();
+      const chatRoom =
+        await testMessageDataFactory.createChatRoomFixture(senderId, receiverId, productId);
       const chatRoomId = chatRoom.id;
 
       // When: 대화방 조회
-      const createdRoom = await service.findOrCreateChatroom(
+      const { chatRoom: createdRoom } = await service.findOrCreateChatroom(
         senderId,
         receiverId,
         productId,
@@ -131,8 +135,11 @@ describe('MessagesMongoService 통합 테스트', () => {
     let chatRoomId: string;
     beforeAll(async () => {
       // 테스트 대화방 생성
-      const { chatRoom } =
-        await testMessageDataFactory.createChatRoomFixture();
+      const chatRoom = await testMessageDataFactory.createChatRoomFixture(
+        senderId,
+        receiverId,
+        productId,
+      );
       chatRoomId = chatRoom.id;
     });
     it('메시지 전송 성공', async () => {
@@ -187,27 +194,32 @@ describe('MessagesMongoService 통합 테스트', () => {
   });
   describe('방별 메시지 조회', () => {
     let chatRoomId: string;
-    let senderId: string;
-    let receiverId: string;
     let messages: Message[];
     const messageCount = 10;
     beforeAll(async () => {
       //  테스트 데이터 생성
       const result =
-        await testMessageDataFactory.createChatRoomWithMessagesFixture(messageCount);
+        await testMessageDataFactory.createChatRoomWithMessagesFixture(
+          senderId,
+          receiverId,
+          productId,
+          { messageCount },
+        );
       chatRoomId = result.chatRoom.id;
-      senderId = result.senderId;
-      receiverId = result.receiverId;
       messages = result.messages!;
     });
     it('메시지 조회 성공', async () => {
       // Then: 메시지 조회
-      const result = await service.findMessagesByRoomId(chatRoomId, {
-        page: 1,
-        limit: 10,
-        sortBy: 'createdAt',
-        sortOrder: 'DESC',
-      });
+      const result = await service.findMessagesByRoomId(
+        chatRoomId,
+        receiverId,
+        {
+          page: 1,
+          limit: 10,
+          sortBy: 'createdAt',
+          sortOrder: 'DESC',
+        },
+      );
       expect(result.items.length).toBe(messageCount);
       expect(result.meta.total).toBe(messageCount);
     });
@@ -219,12 +231,16 @@ describe('MessagesMongoService 통합 테스트', () => {
       );
 
       // Then: 메시지 조회
-      const result = await service.findMessagesByRoomId(chatRoomId, {
-        page: 1,
-        limit: 10,
-        sortBy: 'createdAt',
-        sortOrder: 'ASC',
-      });
+      const result = await service.findMessagesByRoomId(
+        chatRoomId,
+        receiverId,
+        {
+          page: 1,
+          limit: 10,
+          sortBy: 'createdAt',
+          sortOrder: 'ASC',
+        },
+      );
       expect(result.items.length).toBe(messageCount);
       expect(result.meta.total).toBe(messageCount);
       expect(result.items[0].id).toBe(sortedMessages[0].id);
@@ -233,35 +249,51 @@ describe('MessagesMongoService 통합 테스트', () => {
       );
     });
 
-    it('존재하지 않는 대화방 조회 시 메시지 없음', async () => {
-      // Given: 존재하지 않는 대화방으로 메시지 조회
-      const notExistRoomId = new Types.ObjectId().toHexString();
+    describe('실패 케이스', () => {
+      it('존재하지 않는 대화방 조회 NotFoundException', async () => {
+        // Given: 존재하지 않는 대화방으로 메시지 조회
+        const notExistRoomId = new Types.ObjectId().toHexString();
 
-      // When: 메시지 조회
-      const result = await service.findMessagesByRoomId(notExistRoomId, {
-        page: 1,
-        limit: 10,
-        sortBy: 'createdAt',
-        sortOrder: 'DESC',
+        // When & Then: 메시지 조회
+        await expect(
+          service.findMessagesByRoomId(notExistRoomId, receiverId, {
+            page: 1,
+            limit: 10,
+            sortBy: 'createdAt',
+            sortOrder: 'DESC',
+          }),
+        ).rejects.toThrow(new NotFoundException('대화방을 찾을 수 없습니다'));
       });
+      it('권한없는 사용자가 대화방 조회 ForbiddenException', async () => {
+        // Given: 권한없는 사용자
+        const notExistUser = uuidv4();
 
-      // Then: 메시지 없음
-      expect(result.items.length).toBe(0);
-      expect(result.meta.total).toBe(0);
+        // When & Then: 메시지 조회
+        await expect(
+          service.findMessagesByRoomId(chatRoomId, notExistUser, {
+            page: 1,
+            limit: 10,
+            sortBy: 'createdAt',
+            sortOrder: 'DESC',
+          }),
+        ).rejects.toThrow(new ForbiddenException('권한이 없습니다'));
+      });
     });
   });
 
   describe('메시지 읽음 처리', () => {
     let chatRoomId: string;
-    let senderId: string;
-    let receiverId: string;
     let messageCount = 10;
     beforeEach(async () => {
       // 테스트 데이터 생성
-      const result = await testMessageDataFactory.createChatRoomWithMessagesFixture(messageCount);
+      const result =
+        await testMessageDataFactory.createChatRoomWithMessagesFixture(
+          senderId,
+          receiverId,
+          productId,
+          { messageCount },
+        );
       chatRoomId = result.chatRoom.id;
-      senderId = result.senderId;
-      receiverId = result.receiverId;
     });
 
     afterEach(async () => {
@@ -278,26 +310,30 @@ describe('MessagesMongoService 통합 테스트', () => {
         receiverId: receiverId,
       });
       expect(result).toBe(messageCount);
-      expect(updatedMessages.every(message => message.readAt)).toBe(true);
+      expect(updatedMessages.every((message) => message.readAt)).toBe(true);
     });
-
-  })
+  });
 
   describe('방별 안읽은 메시지 수를 조회', () => {
-    let senderId: string;
-    let receiverId: string;
     let chatRoomId: string;
     const messageCount = 10;
 
     beforeAll(async () => {
-      const result = await testMessageDataFactory.createChatRoomWithMessagesFixture(messageCount);
+      const result =
+        await testMessageDataFactory.createChatRoomWithMessagesFixture(
+          senderId,
+          receiverId,
+          productId,
+          { messageCount },
+        );
       chatRoomId = result.chatRoom.id;
-      senderId = result.senderId;
-      receiverId = result.receiverId;
-    })
+    });
     it('방별 메시지 카운트 조회', async () => {
       // When: 메시지 카운트 조회
-      const count = await service.countUnreadMessagesByRoom(chatRoomId, receiverId);
+      const count = await service.countUnreadMessagesByRoom(
+        chatRoomId,
+        receiverId,
+      );
 
       // Then: 메시지 카운트 확인
       expect(count).toBe(messageCount);
@@ -305,19 +341,25 @@ describe('MessagesMongoService 통합 테스트', () => {
 
     it('발신인 아이디로 안읽은 메시지 조회 시 메시지 없음', async () => {
       // When: 메시지 조회
-      const unreadCount = await service.countUnreadMessagesByRoom(chatRoomId, senderId);
+      const unreadCount = await service.countUnreadMessagesByRoom(
+        chatRoomId,
+        senderId,
+      );
 
       // Then: 메시지 없음
       expect(unreadCount).toBe(0);
-    })
+    });
 
     it('존재하지 않는 대화방으로 조회시 NotFoundException', async () => {
       // When: 존재하지 않는 대화방으로 조회
       const notExistRoomId = new Types.ObjectId().toHexString();
-      const unreadCount = await service.countUnreadMessagesByRoom(notExistRoomId, receiverId);
+      const unreadCount = await service.countUnreadMessagesByRoom(
+        notExistRoomId,
+        receiverId,
+      );
 
       // Then: 메시지 없음
       expect(unreadCount).toBe(0);
-    })
-  })
+    });
+  });
 });

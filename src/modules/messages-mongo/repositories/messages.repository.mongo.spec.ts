@@ -63,14 +63,14 @@ describe('MessageRepositoryMongo e2e 테스트', () => {
   });
 
   describe('POST /api/v1/messages - 메시지 전송', () => {
-    let seller, buyer;
+    let seller, buyer, sellerToken, buyerToken;
     beforeAll(async () => {
-      ({ seller, buyer } = await testDataFactory.createSellerAndBuyer());
+      ({ seller, buyer, sellerToken, buyerToken } = await testDataFactory.createSellerAndBuyerWithToken());
     })
     it('메시지 전송', async () => {
       const res = await request(app.getHttpServer())
         .post('/api/v1/messages-mongo')
-        .set('Authorization', `Bearer ${buyer.token}`)
+        .set('Authorization', `Bearer ${buyerToken}`)
         .send({
           receiverId: seller.id,
           content: '안녕하세요',

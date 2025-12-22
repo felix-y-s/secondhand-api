@@ -1,22 +1,30 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { MessageType } from '../domain/enums/message-type.enum';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUrl,
+  IsUUID,
+} from 'class-validator';
 
-export class sendMessageDto {
+export class SendMessageDto {
   @ApiProperty({
     description: '대화방 아이디',
-    example: '123e4567-e89b-12d3-a456-426614174000',
+    example: '6943d53f83e1208833c1285e',
   })
-  @IsString()
   @IsNotEmpty({ message: '대화방 아이디가 누락 되었습니다' })
+  @IsString()
   chatRoomId: string;
-  
+
   @ApiProperty({
     description: '수신인 아이디',
     example: '123e4567-e89b-12d3-a456-426614174000',
   })
-  @IsString()
   @IsNotEmpty({ message: '수신인 아이디가 누락 되었습니다' })
+  @IsString()
+  @IsUUID()
   receiverId: string;
 
   @ApiProperty({ description: '대화 내용', example: '안녕하세요' })
@@ -43,7 +51,7 @@ export class sendMessageDto {
   @IsString()
   @IsUrl()
   @IsOptional()
-  fileUrl: string;
+  fileUrl?: string;
 
   @ApiPropertyOptional({
     description: '파일명',
@@ -52,5 +60,5 @@ export class sendMessageDto {
   })
   @IsString()
   @IsOptional()
-  fileName: string;
+  fileName?: string;
 }

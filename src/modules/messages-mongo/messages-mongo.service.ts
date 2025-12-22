@@ -5,6 +5,7 @@ import { ChatRoomService, MessageService } from './services'
 import { MessageEntity } from './domain/entities/message.entity';
 import { InjectConnection } from '@nestjs/mongoose';
 import { Connection } from 'mongoose';
+import { ChatRoomEntity } from './domain/entities/chat-room.entity';
 
 @Injectable()
 export class MessagesMongoService {
@@ -66,6 +67,18 @@ export class MessagesMongoService {
   }
 
   /**
+   * 대화방 목록 조회
+   *
+   * @param userId
+   */
+  async getChatRoomList(
+    userId: string,
+    pagination: Required<PaginationOptions>,
+  ): Promise<PaginatedResult<ChatRoomEntity>> {
+    return await this.chatRoomService.getChatRoomList(userId, pagination);
+  }
+
+  /**
    * 방별 메시지 조회
    *
    * @param chatRoomId 방 ID
@@ -74,10 +87,12 @@ export class MessagesMongoService {
    */
   async findMessagesByRoomId(
     chatRoomId: string,
+    userId: string,
     pagination: Required<PaginationOptions>,
   ): Promise<PaginatedResult<MessageEntity>> {
     return await this.messageService.findMessagesByRoomId(
       chatRoomId,
+      userId,
       pagination,
     );
   }
@@ -122,8 +137,9 @@ export class MessagesMongoService {
    */
   async leaveChatroom(chatRoomId: string, userId: string): Promise<void> {
     // Replica Set 사용 가능 여부 확인
-    const isReplicaSet = this.connection.db?.admin ?
-      await this.isReplicaSetAvailable() : false;
+    const isReplicaSet = this.connection.db?.admin
+      ? await this.isReplicaSetAvailable()
+      : false;
 
     if (isReplicaSet) {
       // 프로덕션: 트랜잭션 사용

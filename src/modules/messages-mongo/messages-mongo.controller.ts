@@ -21,7 +21,7 @@ import { ApiChatRoomIdParam } from './decorators/api-chatroom-id.decorator';
 import { SkipThrottle } from '@nestjs/throttler';
 import { UnreadMessageCountResponseDto } from './dto/unread-message-count.response.dto';
 import { ApiResponseDeco } from './decorators/api.response.decorator';
-import { sendMessageDto } from './dto/send-message.dto';
+import { SendMessageDto } from './dto/send-message.dto';
 import { CreateChatRoomDto } from './dto/create-chat-room.dto';
 import { PaginatedResult, PaginationOptions } from '@/common/types';
 import { MessageEntity } from './domain/entities/message.entity';
@@ -55,7 +55,16 @@ export class MessagesMongoController {
 
     return chatRoom;
   }
-  
+
+  /**
+   * 대화방 목록 조회
+   */
+  @Get('/chatRoom/list')
+  @ApiOperation({ summary: '대화방 목록 조회'})
+  async getChatRoomList(@CurrentUser('userId') userId: string, @Query(ValidationPipe, PaginationPipe) pagination: Required<PaginationOptions>): Promise<PaginatedResult<ChatRoomEntity>> {
+    return this.service.getChatRoomList(userId, pagination);
+  }
+
   /**
    * 대화방 메시지 히스토리 조회
    */
@@ -64,10 +73,11 @@ export class MessagesMongoController {
   @ApiChatRoomIdParam()
   async getMessagesByRoomId(
     @Param('roomId') roomId: string,
+    @CurrentUser('userId') userId: string,
     @Query(ValidationPipe, PaginationPipe)
     pagination: Required<PaginationOptions>,
   ): Promise<PaginatedResult<MessageEntity>> {
-    return this.service.findMessagesByRoomId(roomId, pagination);
+    return this.service.findMessagesByRoomId(roomId, userId, pagination);
   }
 
   /**
@@ -79,7 +89,7 @@ export class MessagesMongoController {
   @ApiOperation({ summary: '메시지 전송' })
   async sendMessage(
     @CurrentUser('userId') userId: string,
-    @Body() dto: sendMessageDto,
+    @Body() dto: SendMessageDto,
   ): Promise<void> {
     await this.service.sendMessage(
       dto.chatRoomId,
@@ -93,7 +103,7 @@ export class MessagesMongoController {
   /**
    * 메시지 읽음 처리
    */
-  @Patch('chatrooms/:roomId/read')
+  @Patch('chatroom/:roomId/read')
   @ApiOperation({ summary: '메시지 읽음 처리' })
   @ApiChatRoomIdParam()
   async markMessageAsRead(
@@ -107,7 +117,7 @@ export class MessagesMongoController {
   /**
    * 안 읽은 메시지 카운트 조회
    */
-  @Get('chatrooms/:roomId/unread-count')
+  @Get('chatroom/:roomId/unread-count')
   @ApiOperation({ summary: '안 읽은 메시지 카운트 조회' })
   @ApiChatRoomIdParam()
   @ApiResponseDeco(UnreadMessageCountResponseDto)
@@ -128,7 +138,7 @@ export class MessagesMongoController {
    * - 대화방에서 사용자 나감 처리
    * - 모든 사용자가 나가면 대화방 삭제, 메시지 삭제
    */
-  @Delete('chatrooms/:roomId/leave')
+  @Delete('chatroom/:roomId/leave')
   @ApiOperation({ summary: '대화방 나가기' })
   async leaveChatroom(
     @CurrentUser('userId') userId: string,

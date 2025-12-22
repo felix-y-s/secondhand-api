@@ -1,4 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { MessageRepositoryMongo } from '../repositories/messages.repository.mongo';
 import { MessageType } from '../domain/enums/message-type.enum';
 import { PaginatedResult, PaginationOptions } from '@/common/types';
@@ -10,7 +14,8 @@ import { ClientSession } from 'mongoose';
 
 @Injectable()
 export class MessageService {
-  constructor(private readonly repository: MessageRepositoryMongo,
+  constructor(
+    private readonly repository: MessageRepositoryMongo,
     private readonly usersService: UsersService,
     private readonly chatRoomService: ChatRoomService,
   ) {}
@@ -31,7 +36,7 @@ export class MessageService {
     // 대화방 존재 확인
     await this.chatRoomService.ensureChatRoomExist(chatRoomId);
 
-    return await this.repository.createMessage(
+    const message = await this.repository.createMessage(
       chatRoomId,
       senderId,
       receiverId,
@@ -40,12 +45,26 @@ export class MessageService {
       fileUrl,
       fileName,
     );
+
+    await this.afterMessageSent(chatRoomId, message);
+
+    return message;
+  }
+
+  private async afterMessageSent(chatRoomId: string, message: MessageEntity) {
+    await this.chatRoomService.updateLastMessage(chatRoomId, {
+      lastMessage: message.message,
+      lastMessageId: message.id,
+    });
   }
 
   async findMessagesByRoomId(
     roomId: string,
+    userId: string,
     pagination: Required<PaginationOptions>,
   ): Promise<PaginatedResult<MessageEntity>> {
+    await this.chatRoomService.ensureUserCanAccessChatRoom(roomId, userId);
+
     return this.repository.findMessagesByRoomId(roomId, pagination);
   }
 
@@ -63,7 +82,10 @@ export class MessageService {
     );
   }
 
-  async removeMessagesByChatRoomId(chatRoomId: string, session?: ClientSession): Promise<void> {
+  async removeMessagesByChatRoomId(
+    chatRoomId: string,
+    session?: ClientSession,
+  ): Promise<void> {
     await this.repository.deleteMessagesByChatRoomId(chatRoomId, session);
   }
 }
