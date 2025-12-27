@@ -64,6 +64,9 @@ export class EventPublisherService {
     event: T,
     options?: PublishOptions,
   ): Promise<void> {
+    // 채널 풀에서 채널 가져오기
+    const channel = await this.rabbitMQConnection.getChannel();
+
     try {
       // 이벤트 ID가 없으면 생성
       if (!event.eventId) {
@@ -79,8 +82,6 @@ export class EventPublisherService {
         `분산 이벤트 발행: ${event.eventType} | ID: ${event.eventId}`,
         'EventPublisherService',
       );
-
-      const channelWrapper = this.rabbitMQConnection.getChannelWrapper();
 
       // Routing Key 생성 (예: user.registered, order.created)
       const routingKey = event.eventType;
@@ -106,7 +107,7 @@ export class EventPublisherService {
       }
 
       // RabbitMQ로 메시지 발행
-      await channelWrapper.publish(
+      await channel.publish(
         'secondhand.events', // Exchange 이름
         routingKey, // Routing Key
         message, // 메시지 내용
@@ -133,6 +134,9 @@ export class EventPublisherService {
       } else {
         throw error;
       }
+    } finally {
+      // 🔥 채널을 풀에 반환 (반드시 실행)
+      this.rabbitMQConnection.releaseChannel(channel);
     }
   }
 

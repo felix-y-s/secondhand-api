@@ -20,6 +20,7 @@ import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
  * - Exchange, Queue, Binding 설정
  * - Dead Letter Queue (DLQ) 처리
  * - 연결 상태 모니터링
+ * - 채널 풀링을 통한 동시성 개선
  *
  * 네이밍 규칙:
  * - Exchange: secondhand.{type}
@@ -31,13 +32,23 @@ export class RabbitMQConnectionService
   implements OnModuleInit, OnModuleDestroy
 {
   private connection: amqp.AmqpConnectionManager;
-  private channelWrapper: ChannelWrapper;
+
+  // 채널 풀링 관련
+  private channelPool: ChannelWrapper[] = [];
+  private channelsInUse: Set<ChannelWrapper> = new Set();
+  private poolSize: number;
 
   constructor(
     private configService: ConfigService,
     @Inject(WINSTON_MODULE_NEST_PROVIDER)
     private readonly logger: LoggerService,
-  ) {}
+  ) {
+    // 풀 크기 설정
+    this.poolSize = this.configService.get<number>(
+      'rabbitmq.channelPoolSize',
+      5,
+    );
+  }
 
   async onModuleInit() {
     await this.connect();
@@ -96,16 +107,43 @@ export class RabbitMQConnectionService
       );
     });
 
-    // 채널 생성
-    this.channelWrapper = this.connection.createChannel({
-      json: false,
-      setup: async (channel: ConfirmChannel) => {
-        await this.setupInfrastructure(channel);
-      },
-    });
+    // 채널 풀 생성
+    await this.createChannelPool();
 
-    await this.channelWrapper.waitForConnect();
-    this.logger.log('✅ RabbitMQ 초기화 완료', 'RabbitMQConnectionService');
+    this.logger.log(
+      `✅ RabbitMQ 초기화 완료 (채널 풀 크기: ${this.poolSize})`,
+      'RabbitMQConnectionService',
+    );
+  }
+
+  /**
+   * 채널 풀 생성
+   */
+  private async createChannelPool(): Promise<void> {
+    this.logger.log(
+      `채널 풀 생성 중... (크기: ${this.poolSize})`,
+      'RabbitMQConnectionService',
+    );
+
+    for (let i = 0; i < this.poolSize; i++) {
+      const channel = this.connection.createChannel({
+        json: false,
+        setup: async (ch: ConfirmChannel) => {
+          // 인프라 설정은 첫 번째 채널에서만 실행
+          if (i === 0) {
+            await this.setupInfrastructure(ch);
+          }
+        },
+      });
+
+      await channel.waitForConnect();
+      this.channelPool.push(channel);
+
+      this.logger.log(
+        `채널 #${i + 1} 생성 완료`,
+        'RabbitMQConnectionService',
+      );
+    }
   }
 
   /**
@@ -275,9 +313,14 @@ export class RabbitMQConnectionService
    */
   private async disconnect(): Promise<void> {
     try {
-      if (this.channelWrapper) {
-        await this.channelWrapper.close();
+      // 모든 채널 종료
+      for (const channel of this.channelPool) {
+        await channel.close();
       }
+      this.channelPool = [];
+      this.channelsInUse.clear();
+
+      // 연결 종료
       if (this.connection) {
         await this.connection.close();
       }
@@ -292,13 +335,77 @@ export class RabbitMQConnectionService
   }
 
   /**
-   * 채널 Wrapper 반환
+   * 채널 풀에서 사용 가능한 채널 가져오기
+   *
+   * 동작:
+   * 1. 풀에 사용 가능한 채널이 있으면 반환
+   * 2. 모두 사용 중이면 새 채널 생성 (동적 확장)
+   *
+   * 주의: 사용 후 반드시 releaseChannel()로 반환해야 함
+   */
+  async getChannel(): Promise<ChannelWrapper> {
+    // 사용 가능한 채널 찾기
+    const availableChannel = this.channelPool.find(
+      (channel) => !this.channelsInUse.has(channel),
+    );
+
+    if (availableChannel) {
+      this.channelsInUse.add(availableChannel);
+      this.logger.log(
+        `채널 풀에서 채널 가져옴 (사용 중: ${this.channelsInUse.size}/${this.channelPool.length})`,
+        'RabbitMQConnectionService',
+      );
+      return availableChannel;
+    }
+
+    // 모든 채널이 사용 중이면 새로 생성 (동적 확장)
+    this.logger.warn(
+      `모든 채널 사용 중 - 새 채널 생성 (풀 크기: ${this.channelPool.length})`,
+      'RabbitMQConnectionService',
+    );
+
+    const newChannel = this.connection.createChannel({
+      json: false,
+    });
+
+    await newChannel.waitForConnect();
+    this.channelPool.push(newChannel);
+    this.channelsInUse.add(newChannel);
+
+    return newChannel;
+  }
+
+  /**
+   * 채널을 풀에 반환
+   *
+   * @param channel - 반환할 채널
+   */
+  releaseChannel(channel: ChannelWrapper): void {
+    if (this.channelsInUse.has(channel)) {
+      this.channelsInUse.delete(channel);
+      this.logger.log(
+        `채널 반환 완료 (사용 중: ${this.channelsInUse.size}/${this.channelPool.length})`,
+        'RabbitMQConnectionService',
+      );
+    } else {
+      this.logger.warn(
+        '반환하려는 채널이 사용 중 목록에 없습니다',
+        'RabbitMQConnectionService',
+      );
+    }
+  }
+
+  /**
+   * 채널 Wrapper 반환 (하위 호환성)
+   *
+   * @deprecated getChannel()과 releaseChannel()을 사용하세요
    */
   getChannelWrapper(): ChannelWrapper {
-    if (!this.channelWrapper) {
+    if (this.channelPool.length === 0) {
       throw new Error('RabbitMQ 채널이 초기화되지 않았습니다.');
     }
-    return this.channelWrapper;
+    // 첫 번째 채널 반환 (하위 호환성)
+    return this.channelPool[0];
   }
 
   /**
@@ -312,6 +419,6 @@ export class RabbitMQConnectionService
    * 채널 상태 확인
    */
   isChannelConnected(): boolean {
-    return this.channelWrapper !== undefined && this.isConnected();
+    return this.channelPool.length > 0 && this.isConnected();
   }
 }
