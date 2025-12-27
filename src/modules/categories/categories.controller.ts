@@ -64,7 +64,7 @@ export class CategoriesController {
   @ApiResponse({ status: 409, description: '이름 또는 슬러그 중복' })
   async create(@Body() createCategoryDto: CreateCategoryDto) {
     const category = await this.categoriesService.create(createCategoryDto);
-    return ResponseDto.success(category, '카테고리가 생성되었습니다');
+    return ResponseDto.success(category, 201, '카테고리가 생성되었습니다');
   }
 
   /**
@@ -102,7 +102,7 @@ export class CategoriesController {
       isActive,
       includeChildren,
     });
-    return ResponseDto.success(categories, '카테고리 목록 조회 성공');
+    return ResponseDto.success(categories, 200, '카테고리 목록 조회 성공');
   }
 
   /**
@@ -129,7 +129,7 @@ export class CategoriesController {
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
   ) {
     const tree = await this.categoriesService.findTree(isActive);
-    return ResponseDto.success(tree, '카테고리 트리 조회 성공');
+    return ResponseDto.success(tree, 200, '카테고리 트리 조회 성공');
   }
 
   /**
@@ -156,7 +156,7 @@ export class CategoriesController {
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
   ) {
     const categories = await this.categoriesService.findRootCategories(isActive);
-    return ResponseDto.success(categories, '최상위 카테고리 목록 조회 성공');
+    return ResponseDto.success(categories, 200, '최상위 카테고리 목록 조회 성공');
   }
 
   /**
@@ -187,7 +187,7 @@ export class CategoriesController {
     includeChildren?: boolean,
   ) {
     const category = await this.categoriesService.findBySlug(slug, includeChildren);
-    return ResponseDto.success(category, '카테고리 조회 성공');
+    return ResponseDto.success(category, 200, '카테고리 조회 성공');
   }
 
   /**
@@ -218,7 +218,7 @@ export class CategoriesController {
     includeChildren?: boolean,
   ) {
     const category = await this.categoriesService.findOne(id, includeChildren);
-    return ResponseDto.success(category, '카테고리 조회 성공');
+    return ResponseDto.success(category, 200, '카테고리 조회 성공');
   }
 
   /**
@@ -248,7 +248,7 @@ export class CategoriesController {
     @Query('isActive', new ParseBoolPipe({ optional: true })) isActive?: boolean,
   ) {
     const children = await this.categoriesService.findChildren(id, isActive);
-    return ResponseDto.success(children, '하위 카테고리 목록 조회 성공');
+    return ResponseDto.success(children, 200, '하위 카테고리 목록 조회 성공');
   }
 
   /**
@@ -276,7 +276,7 @@ export class CategoriesController {
     @Body() updateCategoryDto: UpdateCategoryDto,
   ) {
     const category = await this.categoriesService.update(id, updateCategoryDto);
-    return ResponseDto.success(category, '카테고리가 수정되었습니다');
+    return ResponseDto.success(category, 201, '카테고리가 수정되었습니다');
   }
 
   /**
@@ -304,7 +304,7 @@ export class CategoriesController {
     @Query('order', ParseIntPipe) order: number,
   ) {
     const category = await this.categoriesService.updateOrder(id, order);
-    return ResponseDto.success(category, '카테고리 순서가 변경되었습니다');
+    return ResponseDto.success(category, 200, '카테고리 순서가 변경되었습니다');
   }
 
   /**

@@ -20,7 +20,7 @@ import { EventPublisherService } from './publishers/event-publisher.service';
     RabbitMQModule,
     // EventEmitter 설정
     EventEmitterModule.forRoot({
-      // 와일드카드 사용 가능
+      // 와일드카드 사용 가능 (예: user.*, order.*)
       wildcard: true,
       // 구분자 설정 (예: user.registered, order.created)
       delimiter: '.',

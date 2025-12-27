@@ -70,6 +70,7 @@ export class UsersController {
 
     return {
       success: true,
+      statusCode: 201,
       data: {
         ...loginResult,
         user: plainToInstance(UserResponseDto, loginResult.user),
@@ -100,6 +101,7 @@ export class UsersController {
 
     return {
       success: true,
+      statusCode: 200,
       data: {
         ...result,
         user: plainToInstance(UserResponseDto, result.user),
@@ -132,6 +134,7 @@ export class UsersController {
 
     return {
       success: true,
+      statusCode: 200,
       data: tokens,
       message: 'Token이 재발급되었습니다',
     };
@@ -159,6 +162,7 @@ export class UsersController {
 
     return {
       success: true,
+      statusCode: 200,
       data: plainToInstance(UserResponseDto, userData),
     };
   }
@@ -189,6 +193,7 @@ export class UsersController {
 
     return {
       success: true,
+      statusCode: 200,
       data: plainToInstance(UserResponseDto, updatedUser),
       message: '정보가 수정되었습니다',
     };
@@ -215,6 +220,7 @@ export class UsersController {
 
     return {
       success: true,
+      statusCode: 200,
       data: null,
       message: '회원 탈퇴가 완료되었습니다',
     };

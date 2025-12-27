@@ -49,6 +49,13 @@ export enum EventType {
   NOTIFICATION_EMAIL = 'notification.email', // 이메일 알림
   NOTIFICATION_SMS = 'notification.sms', // SMS 알림
   NOTIFICATION_PUSH = 'notification.push', // 푸시 알림
+
+  // ========================================
+  // 메시지 (Message) 이벤트
+  // ========================================
+  MESSAGE_SENT = 'message.sent', // 메시지 전송 완료
+  MESSAGE_READ = 'message.read', // 메시지 읽음 처리
+  MESSAGE_DELETED = 'message.deleted', // 메시지 삭제
 }
 
 /**
@@ -314,6 +321,50 @@ export interface NotificationPushEvent extends BaseEvent {
   };
 }
 
+// ============================================================
+// 메시지 (Message) 도메인 이벤트
+// ============================================================
+
+/**
+ * 메시지 전송 완료 이벤트
+ */
+export interface MessageSentEvent extends BaseEvent {
+  eventType: EventType.MESSAGE_SENT;
+  data: {
+    chatRoomId: string;
+    messageId: string;
+    senderId: string;
+    receiverId: string;
+    message: string;
+    messageType: string;
+    fileUrl?: string;
+    fileName?: string;
+  };
+}
+
+/**
+ * 메시지 읽음 처리 이벤트
+ */
+export interface MessageReadEvent extends BaseEvent {
+  eventType: EventType.MESSAGE_READ;
+  data: {
+    chatRoomId: string;
+    userId: string;
+    readCount: number;
+  };
+}
+
+/**
+ * 메시지 삭제 이벤트
+ */
+export interface MessageDeletedEvent extends BaseEvent {
+  eventType: EventType.MESSAGE_DELETED;
+  data: {
+    chatRoomId: string;
+    deletedCount: number;
+  };
+}
+
 /**
  * 모든 이벤트 타입의 유니온 타입
  */
@@ -334,4 +385,7 @@ export type DomainEvent =
   | PaymentRefundedEvent
   | NotificationEmailEvent
   | NotificationSmsEvent
-  | NotificationPushEvent;
+  | NotificationPushEvent
+  | MessageSentEvent
+  | MessageReadEvent
+  | MessageDeletedEvent;

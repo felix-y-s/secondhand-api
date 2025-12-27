@@ -68,11 +68,7 @@ export class ProductsController {
       createProductDto,
     );
 
-    return {
-      success: true,
-      data: product,
-      message: '상품이 성공적으로 등록되었습니다',
-    };
+    return ResponseDto.success(product, 201, '상품이 성공적으로 등록되었습니다');
   }
 
   /**
@@ -94,11 +90,7 @@ export class ProductsController {
   ): Promise<ResponseDto<ProductListResponseDto>> {
     const result = await this.productsService.findAll(page, limit);
 
-    return {
-      success: true,
-      data: result,
-      message: '상품 목록 조회 성공',
-    };
+    return ResponseDto.success(result, 200, '상품 목록 조회 성공');
   }
 
   /**
@@ -122,6 +114,7 @@ export class ProductsController {
 
     return {
       success: true,
+      statusCode: 200,
       data: result,
       message: '상품 검색 성공',
     };
@@ -156,6 +149,7 @@ export class ProductsController {
 
     return {
       success: true,
+      statusCode: 200,
       data: result,
       message: '내 상품 목록 조회 성공',
     };
@@ -182,6 +176,7 @@ export class ProductsController {
 
     return {
       success: true,
+      statusCode: 200,
       data: product,
       message: '상품 조회 성공',
     };
@@ -217,6 +212,7 @@ export class ProductsController {
 
     return {
       success: true,
+      statusCode: 201,
       data: product,
       message: '상품 정보가 성공적으로 수정되었습니다',
     };
@@ -246,6 +242,7 @@ export class ProductsController {
 
     return {
       success: true,
+      statusCode: 200,
       data: product,
       message: '상품이 성공적으로 삭제되었습니다',
     };

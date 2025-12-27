@@ -201,7 +201,7 @@ export class UserService {
 #### 1. 로컬 이벤트 발행 (같은 프로세스 내)
 
 ```typescript
-// EventEmitter를 통한 빠른 통신
+// EventEmitter를 통한 빠른 통신 
 this.eventPublisher.emitLocal(event);
 ```
 

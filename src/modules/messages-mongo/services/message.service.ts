@@ -11,6 +11,10 @@ import { MessageEntity } from '../domain/entities/message.entity';
 import { UsersService } from '@/modules/users/users.service';
 import { ChatRoomService } from './chat-room.service';
 import { ClientSession } from 'mongoose';
+import { EventPublisherService } from '@/events/publishers/event-publisher.service';
+import { EventType } from '@/events/types/event.types';
+import type { MessageSentEvent } from '@/events/types/event.types';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class MessageService {
@@ -18,6 +22,7 @@ export class MessageService {
     private readonly repository: MessageRepositoryMongo,
     private readonly usersService: UsersService,
     private readonly chatRoomService: ChatRoomService,
+    private readonly eventPublisher: EventPublisherService,
   ) {}
 
   async sendMessage(
@@ -51,11 +56,42 @@ export class MessageService {
     return message;
   }
 
+  /**
+   * 메시지 발송 후 처리 - 이벤트 발행
+   *
+   * 이벤트 기반 처리로 변경:
+   * - 마지막 메시지 업데이트
+   * - 알림 전송
+   * - 읽지 않은 메시지 카운트 업데이트
+   * - 통계 업데이트
+   * 등의 로직이 각각의 이벤트 핸들러에서 독립적으로 처리됨
+   */
   private async afterMessageSent(chatRoomId: string, message: MessageEntity) {
-    await this.chatRoomService.updateLastMessage(chatRoomId, {
-      lastMessage: message.message,
-      lastMessageId: message.id,
-    });
+    // 메시지 발송 이벤트 생성
+    const event: MessageSentEvent = {
+      eventId: uuidv4(),
+      eventType: EventType.MESSAGE_SENT,
+      timestamp: new Date(),
+      data: {
+        messageId: message.id,
+        chatRoomId: chatRoomId,
+        senderId: message.senderId,
+        receiverId: message.receiverId,
+        message: message.message,
+        messageType: message.messageType,
+        fileUrl: message.fileUrl,
+        fileName: message.fileName,
+      },
+    };
+
+    // 로컬 이벤트 발행 (같은 프로세스 내 핸들러들이 처리)
+    this.eventPublisher.emitLocal(event);
+
+    // 또는 분산 이벤트 발행 (다른 서비스에서도 처리 가능)
+    // await this.eventPublisher.emitDistributed(event);
+
+    // 또는 로컬 + 분산 동시 발행
+    // await this.eventPublisher.emitAll(event);
   }
 
   async findMessagesByRoomId(
