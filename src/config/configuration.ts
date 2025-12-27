@@ -63,6 +63,11 @@ export default () => ({
       process.env.RABBITMQ_MANAGEMENT_PORT || '15674',
       10,
     ),
+    // 채널 풀링 설정
+    channelPoolSize: parseInt(
+      process.env.RABBITMQ_CHANNEL_POOL_SIZE || '5',
+      10,
+    ),
   },
 
   // JWT 인증 설정
