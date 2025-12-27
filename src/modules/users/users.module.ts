@@ -5,14 +5,16 @@ import { PrismaModule } from '@/prisma/prisma.module';
 import { UsersRepository } from './repositories/users.repository';
 import { OrdersModule } from '../orders/orders.module';
 import { AuthModule } from '../auth/auth.module';
+import { RabbitMQModule } from '@/rabbitmq/rabbitmq.module';
+import { UserEventConsumer } from './events';
 
 /**
  * 사용자 관리 모듈
  */
 @Module({
-  imports: [OrdersModule, PrismaModule, AuthModule],
+  imports: [OrdersModule, PrismaModule, AuthModule, RabbitMQModule],
   controllers: [UsersController],
-  providers: [UsersService, UsersRepository],
+  providers: [UsersService, UsersRepository, UserEventConsumer],
   exports: [UsersService], // 다른 모듈에서 UsersService 사용 가능
 })
 export class UsersModule {}

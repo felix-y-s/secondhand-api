@@ -1,6 +1,6 @@
 import { Logger, Inject } from '@nestjs/common';
 import type { LoggerService } from '@nestjs/common';
-import { BaseEvent } from '../types/event.types';
+import { BaseEvent } from './types/event.types';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 
 /**

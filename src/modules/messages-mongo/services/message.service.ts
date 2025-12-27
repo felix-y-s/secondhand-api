@@ -11,9 +11,9 @@ import { MessageEntity } from '../domain/entities/message.entity';
 import { UsersService } from '@/modules/users/users.service';
 import { ChatRoomService } from './chat-room.service';
 import { ClientSession } from 'mongoose';
-import { EventPublisherService } from '@/events/publishers/event-publisher.service';
-import { EventType } from '@/events/types/event.types';
-import type { MessageSentEvent } from '@/events/types/event.types';
+import { EventPublisherService } from '@/events';
+import { EventType } from '@/events';
+import type { MessageSentEvent } from '@/events';
 import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
