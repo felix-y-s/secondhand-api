@@ -1,7 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
-import { EventPublisherService } from './publishers/event-publisher.service';
+import { EventPublisherService } from './event-publisher.service';
 
 /**
  * 이벤트 모듈

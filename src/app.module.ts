@@ -10,7 +10,7 @@ import { LoggerModule } from '@/modules/logger/logger.module';
 import { MongodbModule } from './database/mongodb/mongodb.module';
 import { RedisModule } from './database/redis/redis.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
-import { EventsModule } from './events/events.module';
+import { EventsModule } from '@/events';
 import { HealthModule } from './health/health.module';
 import { CustomThrottlerGuard } from './common/guards/custom-throttler.guard';
 import configuration from './config/configuration';

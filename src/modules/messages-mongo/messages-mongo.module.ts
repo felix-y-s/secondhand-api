@@ -10,7 +10,7 @@ import { UsersModule } from '@/modules/users/users.module';
 import { ProductsModule } from '../products/products.module';
 import { MessageMapper } from './mappers/message.mapper';
 import { ChatRoomMapper } from './mappers/chat-room.mapper';
-import { EventsModule } from '@/events/events.module';
+import { EventsModule } from '@/events';
 import { UpdateLastMessageHandler } from './events/handlers/update-last-message.handler';
 import { SendMessageNotificationHandler } from './events/handlers/send-message-notification.handler';
 import { UpdateUnreadCountHandler } from './events/handlers/update-unread-count.handler';

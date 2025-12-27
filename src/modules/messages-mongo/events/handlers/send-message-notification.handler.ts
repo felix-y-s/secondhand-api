@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { BaseLocalEventHandler } from '@/events/handlers/base-event.handler';
-import { EventType } from '@/events/types/event.types';
-import type { MessageSentEvent } from '@/events/types/event.types';
+import { BaseLocalEventHandler } from '@/events';
+import { EventType } from '@/events';
+import type { MessageSentEvent } from '@/events';
 
 /**
  * 메시지 발송 후 알림 전송 핸들러

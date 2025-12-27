@@ -1,8 +1,8 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import type { LoggerService } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { RabbitMQConnectionService } from '../../rabbitmq/rabbitmq-connection.service';
-import { BaseEvent } from '../types/event.types';
+import { RabbitMQConnectionService } from '../rabbitmq/rabbitmq-connection.service';
+import { BaseEvent } from './types/event.types';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { v4 as uuidv4 } from 'uuid';
 
